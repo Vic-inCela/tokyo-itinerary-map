@@ -2,7 +2,7 @@
    encrypted booking PDF so the itinerary + 憑證 work without network
    (map tiles still need to be online). Bump VERSION whenever index.html
    or any docs/*.bin changes so clients refetch. */
-const VERSION = 'v2';
+const VERSION = 'v3';
 const CACHE = 'tim-' + VERSION;
 
 const PRECACHE = [

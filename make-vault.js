@@ -51,7 +51,7 @@ const DOCS = {
 
 const docBtns = key => `
   <div class="doclist">${DOCS[key].map(([id,,label]) =>
-    `<button class="doc" type="button" data-doc="${id}">📄 ${label}</button>`).join('')}
+    `<a class="doc" data-doc="${id}" target="_blank" rel="noopener">📄 ${label}</a>`).join('')}
   </div>`;
 
 const VAULT_HTML = `
