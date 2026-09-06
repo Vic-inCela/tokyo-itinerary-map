@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>東京五日遊 · 路線圖行程</title>
+<meta name="theme-color" content="#e9edf2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="東京五日遊">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* --- surfaces: cool porcelain, not cream --- */
+    --paper:#e9edf2;
+    --surface:#ffffff;
+    --wash:#f4f6f9;
+    --ink:#16202e;
+    --ink-2:#5d6b7e;
+    --ink-3:#8b97a7;
+    --hair:rgba(22,32,46,.10);
+    --hair-2:rgba(22,32,46,.06);
+    --shadow-s:0 1px 2px rgba(16,26,40,.06), 0 4px 10px -6px rgba(16,26,40,.18);
+    --shadow-m:0 2px 4px rgba(16,26,40,.05), 0 14px 30px -14px rgba(16,26,40,.28);
+    --shadow-l:0 -2px 6px rgba(16,26,40,.04), 0 -18px 44px -18px rgba(16,26,40,.26);
+
+    /* --- line colours, tuned for light ground --- */
+    --d1:#e0761a;
+    --d2:#00808f;
+    --d3:#2f8b52;
+    --d4:#c2317b;
+    --d5:#5157c4;
+    --accent:var(--d1);
+
+    --font-ui:"Zen Kaku Gothic New","Noto Sans TC","Hiragino Sans",sans-serif;
+    --font-body:"Noto Sans TC","Zen Kaku Gothic New",sans-serif;
+    --font-mono:"DM Mono","Noto Sans TC",ui-monospace,monospace;
+
+    --safe-t:env(safe-area-inset-top,0px);
+    --safe-b:env(safe-area-inset-bottom,0px);
+    --panel-w:420px;
+  }
+
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0;padding:0;height:100%;width:100%;
+    overflow:hidden;overscroll-behavior:none;
+    background:var(--paper);color:var(--ink);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer;}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px;}
+
+  /* ================= map ================= */
+  /* Maps JS (v3.53+) stamps inline position:relative on the container,
+     so size must not depend on position:fixed + inset */
+  #mapDiv{position:fixed;inset:0;z-index:1;background:var(--paper);width:100%;height:100dvh;}
+  .via-dot{
+    width:9px;height:9px;border-radius:50%;
+    background:#ffffff;border:2.5px solid var(--c,var(--accent));
+    box-shadow:0 1px 3px rgba(16,26,40,.35);
+  }
+
+  .pin{
+    position:relative;width:34px;height:34px;border-radius:50%;
+    background:var(--surface);border:2px solid var(--mc,var(--accent));
+    display:grid;place-items:center;cursor:pointer;
+    box-shadow:0 3px 9px -3px rgba(16,26,40,.4);
+    transition:transform .22s cubic-bezier(.2,.9,.3,1.2),background .22s;
+  }
+  .pin .emo{font-size:15px;line-height:1;filter:saturate(1.05);}
+  .pin .num{
+    position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 4px;
+    border-radius:9px;background:var(--mc,var(--accent));color:#fff;
+    font-family:var(--font-mono);font-size:10px;font-weight:500;
+    display:grid;place-items:center;border:1.5px solid var(--surface);
+  }
+  .pin.is-active{transform:scale(1.2);box-shadow:0 9px 20px -6px rgba(16,26,40,.5);}
+  .pin.is-active::after{
+    content:"";position:absolute;inset:-7px;border-radius:50%;
+    border:1.5px solid var(--mc,var(--accent));opacity:.35;
+  }
+
+  /* ================= top signage board ================= */
+  .topbar{
+    position:fixed;top:0;left:0;right:0;z-index:20;
+    padding:calc(var(--safe-t) + 12px) 0 14px;
+    background:linear-gradient(180deg,rgba(233,237,242,.97) 0%,rgba(233,237,242,.92) 46%,rgba(233,237,242,0) 100%);
+  }
+  .topbar-row{display:flex;align-items:center;gap:10px;padding:0 14px 11px;}
+  .brand{display:flex;align-items:center;gap:9px;min-width:0;flex:1;}
+  .brand-mark{
+    flex:none;width:34px;height:34px;border-radius:10px;background:var(--ink);color:#fff;
+    font-family:var(--font-ui);font-weight:700;font-size:12px;letter-spacing:.02em;
+    display:grid;place-items:center;box-shadow:var(--shadow-s);
+  }
+  .brand-t{font-family:var(--font-ui);font-weight:700;font-size:14px;line-height:1.2;}
+  .brand-d{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-2);margin-top:2px;letter-spacing:-.01em;}
+  .ghost-btn{
+    flex:none;width:36px;height:36px;border-radius:50%;background:var(--surface);
+    border:1px solid var(--hair);color:var(--ink-2);
+    display:grid;place-items:center;box-shadow:var(--shadow-s);transition:color .2s,transform .2s;
+  }
+  .ghost-btn svg{width:17px;height:17px;}
+  .ghost-btn:hover{color:var(--ink);}
+  .ghost-btn:active{transform:scale(.94);}
+  .tz-btn{
+    flex:none;height:36px;padding:0 12px;border-radius:18px;background:var(--surface);
+    border:1px solid var(--hair);color:var(--ink-2);box-shadow:var(--shadow-s);
+    font-family:var(--font-ui);font-weight:700;font-size:12px;white-space:nowrap;
+    transition:color .2s,transform .2s;
+  }
+  .tz-btn:hover{color:var(--ink);}
+  .tz-btn:active{transform:scale(.96);}
+  .tzTW{font-style:normal;}
+  .tconv{border-bottom:1px dotted var(--ink-3);cursor:help;}
+
+  /* ---- signature: the day switcher is a rail line ---- */
+  .rail{
+    display:flex;gap:0;overflow-x:auto;scrollbar-width:none;
+    padding:2px 12px 2px;
+  }
+  .rail::-webkit-scrollbar{display:none;}
+  .station{
+    position:relative;flex:none;min-width:70px;padding:16px 2px 2px;
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+  }
+  .station .seg{position:absolute;top:22px;height:2.5px;background:var(--c);opacity:.3;border-radius:2px;}
+  .station .seg.l{left:0;right:50%;}
+  .station .seg.r{left:50%;right:0;}
+  .station.is-first .seg.l,.station.is-last .seg.r{display:none;}
+  .station .dot{
+    position:relative;z-index:1;width:27px;height:27px;border-radius:50%;
+    background:var(--surface);border:2.5px solid var(--c);color:var(--ink);
+    font-family:var(--font-mono);font-size:12px;font-weight:500;
+    display:grid;place-items:center;
+    transition:background .25s,color .25s,transform .25s cubic-bezier(.2,.9,.3,1.3);
+  }
+  .station .st-label{
+    font-size:10.5px;color:var(--ink-3);white-space:nowrap;font-weight:500;
+    transition:color .25s;
+  }
+  .station.is-active .dot{background:var(--c);color:#fff;transform:scale(1.14);box-shadow:0 4px 12px -3px color-mix(in srgb,var(--c) 55%,transparent);}
+  .station.is-active .seg{opacity:.85;}
+  .station.is-active .st-label{color:var(--c);font-weight:700;}
+  .station:not(.is-active):hover .dot{transform:scale(1.08);}
+
+  /* ---- OSM attribution chip (rail geometry is ODbL) ---- */
+  .osm-credit{
+    font-size:10px;line-height:1;color:var(--ink-2);
+    background:rgba(255,255,255,.82);border-radius:4px;
+    padding:3px 6px;margin:0 4px 2px 0;white-space:nowrap;
+  }
+  .osm-credit a{color:inherit;}
+
+  /* ================= panel / bottom sheet ================= */
+  .panel{
+    position:fixed;left:0;right:0;bottom:0;z-index:30;height:200px;
+    background:var(--surface);
+    border-radius:26px 26px 0 0;
+    box-shadow:var(--shadow-l);
+    display:flex;flex-direction:column;overflow:hidden;
+    transition:height .34s cubic-bezier(.22,.68,.35,1);
+    touch-action:none;
+  }
+  .panel.dragging{transition:none;}
+  .grip{flex:none;padding:9px 18px 13px;position:relative;cursor:grab;}
+  .grip-bar{width:40px;height:4px;border-radius:3px;background:rgba(22,32,46,.16);margin:0 auto 12px;}
+  .p-head{padding-right:42px;}
+  .p-eyebrow{
+    display:flex;align-items:center;gap:7px;
+    font-family:var(--font-mono);font-size:11px;color:var(--accent);
+    letter-spacing:.01em;transition:color .3s;
+  }
+  .p-eyebrow::before{content:"";width:14px;height:2.5px;border-radius:2px;background:var(--accent);flex:none;}
+  .p-title{font-family:var(--font-ui);font-weight:700;font-size:19.5px;line-height:1.32;margin-top:6px;letter-spacing:-.01em;}
+  .p-note{font-size:12.5px;color:var(--ink-2);line-height:1.6;margin-top:6px;}
+  .snap-btn{
+    position:absolute;top:24px;right:16px;width:32px;height:32px;border-radius:50%;
+    background:var(--wash);border:1px solid var(--hair-2);color:var(--ink-2);
+    display:grid;place-items:center;transition:transform .3s ease;
+  }
+  .snap-btn svg{width:14px;height:14px;}
+  .snap-btn.up{transform:rotate(180deg);}
+  .p-body{
+    flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    padding:2px 18px calc(26px + var(--safe-b));touch-action:pan-y;
+  }
+
+  /* ---- weather strip ---- */
+  .weather{
+    display:flex;align-items:center;gap:11px;padding:10px 13px;margin:2px 0 16px;
+    background:var(--wash);border-radius:14px;font-size:11.5px;color:var(--ink-2);line-height:1.45;
+  }
+  .weather .wi{font-size:16px;flex:none;}
+  .weather .wt{font-family:var(--font-mono);font-size:13px;color:var(--ink);font-weight:500;flex:none;}
+
+  /* ---- timeline: cards on a rail ---- */
+  .timeline{position:relative;}
+  .stop{position:relative;display:flex;gap:13px;padding-bottom:10px;}
+  .stop::before{
+    content:"";position:absolute;left:12.5px;top:20px;bottom:-2px;width:2.5px;
+    background:var(--c);opacity:.22;border-radius:2px;
+  }
+  .stop:last-child::before{display:none;}
+  .stop-dot{
+    position:relative;z-index:1;flex:none;width:27px;height:27px;margin-top:6px;border-radius:50%;
+    background:var(--surface);border:2.5px solid var(--c);color:var(--c);
+    font-family:var(--font-mono);font-size:11.5px;font-weight:500;
+    display:grid;place-items:center;transition:background .25s,color .25s;
+  }
+  .stop-card{
+    flex:1;min-width:0;background:var(--wash);border-radius:16px;
+    padding:11px 14px 13px;cursor:pointer;
+    transition:background .25s,box-shadow .25s,transform .25s;
+  }
+  .stop-card:hover{background:#eff2f6;}
+  .stop.is-active .stop-dot{background:var(--c);color:#fff;}
+  .stop.is-active .stop-card{background:var(--surface);box-shadow:0 0 0 1.5px var(--c) inset,var(--shadow-m);}
+  .stop-time{font-family:var(--font-mono);font-size:11.5px;font-weight:500;color:var(--c);letter-spacing:-.01em;}
+  .stop-title{font-family:var(--font-ui);font-weight:700;font-size:14.5px;line-height:1.35;margin:3px 0 4px;}
+  .stop-desc{font-size:12.5px;color:var(--ink-2);line-height:1.65;}
+  /* ---- transit legs ---- */
+  .leg{display:flex;gap:13px;padding-bottom:10px;}
+  .leg.is-clickable{cursor:pointer;border-radius:14px;transition:background .2s,box-shadow .2s;}
+  .leg.is-clickable:hover{background:var(--wash);}
+  .leg.is-active{background:var(--wash);box-shadow:0 0 0 1.5px var(--c) inset;}
+  .leg-rail{flex:none;width:27px;display:flex;justify-content:center;align-items:stretch;}
+  .leg-line{width:2.5px;border-radius:2px;background:var(--c);opacity:.9;}
+  .leg.is-walk .leg-line{
+    background:repeating-linear-gradient(180deg,var(--c) 0 3px,transparent 3px 8px);
+    opacity:.75;border-radius:0;
+  }
+  .leg-body{flex:1;min-width:0;padding:5px 2px 7px;}
+  .leg-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .leg-badge{
+    flex:none;font-family:var(--font-mono);font-size:10.5px;font-weight:500;color:#fff;
+    background:var(--c);border-radius:6px;padding:2.5px 7px;letter-spacing:-.01em;
+  }
+  .leg.is-walk .leg-badge{background:none;color:var(--c);font-size:14px;padding:0;}
+  .leg-name{font-size:12.5px;font-weight:500;color:var(--ink);}
+  .leg-meta{font-family:var(--font-mono);font-size:11px;color:var(--ink-2);margin-top:6px;}
+  .leg-via{font-size:11px;color:var(--ink-3);margin-top:4px;line-height:1.5;}
+  .leg-note{
+    font-size:11px;color:var(--ink-3);line-height:1.65;margin-top:7px;
+    padding-left:9px;border-left:2px solid var(--hair);
+  }
+
+  .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;}
+  .tag{font-size:10.5px;padding:3.5px 9px;border-radius:999px;background:rgba(22,32,46,.055);color:var(--ink-2);}
+  .maplink{
+    display:inline-flex;align-items:center;gap:5px;margin-top:10px;
+    font-size:11.5px;font-weight:500;color:var(--c);text-decoration:none;
+    padding:5px 10px 5px 8px;border-radius:999px;border:1px solid currentColor;opacity:.9;
+  }
+  .maplink:hover{opacity:1;}
+  .maplink svg{width:12px;height:12px;flex:none;}
+  .stop-links{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .navlink{background:var(--c);border-color:transparent;color:#fff;}
+
+  /* ---- overview ---- */
+  .lines{display:flex;gap:7px;flex-wrap:wrap;margin:2px 0 14px;}
+  .line-chip{
+    display:flex;align-items:center;gap:7px;font-size:11px;color:var(--ink-2);
+    background:var(--wash);border-radius:999px;padding:5px 11px 5px 8px;
+  }
+  .line-chip i{width:14px;height:3.5px;border-radius:2px;flex:none;}
+  .ov{
+    display:flex;align-items:center;gap:12px;padding:12px 14px;margin-bottom:9px;
+    background:var(--wash);border-radius:16px;cursor:pointer;transition:background .2s,transform .2s;
+  }
+  .ov:hover{background:#eff2f6;transform:translateX(2px);}
+  .ov-dot{
+    flex:none;width:29px;height:29px;border-radius:50%;background:var(--surface);
+    border:2.5px solid var(--c);color:var(--c);
+    font-family:var(--font-mono);font-size:12px;font-weight:500;display:grid;place-items:center;
+  }
+  .ov-day{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-3);}
+  .ov-title{font-family:var(--font-ui);font-weight:700;font-size:13px;margin-top:2px;line-height:1.35;}
+
+  /* ---- info sections ---- */
+  .sec{margin:20px 0 9px;display:flex;align-items:center;gap:9px;}
+  .sec:first-of-type{margin-top:2px;}
+  .sec i{width:3px;height:15px;border-radius:2px;background:var(--accent);flex:none;transition:background .3s;}
+  .sec h3{font-family:var(--font-ui);font-weight:700;font-size:14px;margin:0;}
+  .info p,.info li{font-size:12.5px;color:var(--ink-2);line-height:1.7;margin:0 0 6px;}
+  .info ol,.info ul{margin:0;padding-left:19px;}
+  .info li{margin-bottom:5px;}
+  .info li::marker{color:var(--ink-3);font-family:var(--font-mono);font-size:11px;}
+  .facts{display:flex;flex-direction:column;gap:8px;}
+  .fact{
+    display:flex;align-items:baseline;gap:10px;background:var(--wash);border-radius:13px;
+    padding:10px 13px;font-size:12px;color:var(--ink-2);
+  }
+  .fact .fk{font-family:var(--font-mono);font-size:10px;color:var(--ink-3);flex:none;width:30px;}
+  .fact b{color:var(--ink);font-weight:700;}
+  .fact .fm{font-family:var(--font-mono);font-size:11px;}
+  .slots{display:flex;flex-direction:column;gap:7px;margin-top:4px;}
+  .slot{display:flex;align-items:center;gap:11px;background:var(--wash);border-radius:13px;padding:9px 13px;}
+  .slot .sd{font-size:11.5px;font-weight:500;flex:none;width:74px;}
+  .slot .sh{font-family:var(--font-mono);font-size:11px;color:var(--ink-2);letter-spacing:-.01em;}
+  table.fare{width:100%;border-collapse:collapse;margin-top:8px;font-size:11.5px;}
+  table.fare th,table.fare td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--hair-2);color:var(--ink-2);}
+  table.fare thead th{font-size:10px;color:var(--ink-3);font-family:var(--font-mono);font-weight:400;}
+  table.fare td:not(:first-child){font-family:var(--font-mono);color:var(--ink);}
+  .caution{
+    margin-top:12px;padding:11px 13px;border-radius:13px;
+    background:rgba(224,118,26,.07);font-size:11.5px;color:var(--ink-2);line-height:1.65;
+  }
+
+  /* ---- insurance: hotline + scenario cards ---- */
+  .sos{
+    display:flex;align-items:center;gap:12px;margin:2px 0 11px;padding:12px 14px;
+    border-radius:15px;background:var(--ink);color:#fff;box-shadow:var(--shadow-s);
+  }
+  .sos:active{transform:scale(.99);}
+  .sos .si{font-size:18px;line-height:1;flex:none;}
+  .sos .sb{flex:1;min-width:0;}
+  .sos b{display:block;font-family:var(--font-ui);font-size:12px;font-weight:700;margin-bottom:2px;}
+  .sos i{font-family:var(--font-mono);font-size:14px;font-style:normal;letter-spacing:.01em;}
+  .sos .sg{font-size:11px;opacity:.55;flex:none;}
+  .case{background:var(--wash);border-radius:15px;padding:12px 14px;margin-bottom:9px;}
+  .case-h{display:flex;align-items:center;gap:9px;margin-bottom:8px;}
+  .case-h .ci{font-size:15px;line-height:1;flex:none;}
+  .case-h .ct{font-family:var(--font-ui);font-weight:700;font-size:12.5px;color:var(--ink);flex:1;}
+  .case-h .cc{
+    font-family:var(--font-mono);font-size:9.5px;color:#fff;background:var(--accent);
+    padding:3px 7px;border-radius:7px;flex:none;transition:background .3s;
+  }
+  .info .case ol,.info .case ul{padding-left:16px;}
+  .info .case li{font-size:12px;margin-bottom:5px;}
+  .case .keep{
+    display:flex;gap:9px;align-items:baseline;margin-top:9px;padding-top:9px;
+    border-top:1px solid var(--hair);font-size:11.5px;color:var(--ink-2);line-height:1.65;
+  }
+  .case .keep .kk{
+    font-family:var(--font-mono);font-size:9.5px;color:#fff;background:var(--ink-3);
+    padding:2px 6px;border-radius:6px;flex:none;
+  }
+  .case .warn{
+    margin:8px 0 0;padding:8px 10px;border-radius:10px;
+    background:rgba(224,118,26,.1);font-size:11.5px;line-height:1.6;
+  }
+
+  /* ---- map layers sheet ---- */
+  .layer-sheet[hidden],.sheet-backdrop[hidden]{display:none!important;}
+  .sheet-backdrop{position:fixed;inset:0;z-index:60;background:rgba(16,26,40,.32);}
+  .layer-sheet{
+    position:fixed;left:50%;bottom:0;transform:translateX(-50%);z-index:61;
+    width:min(440px,100%);max-height:72vh;display:flex;flex-direction:column;
+    background:var(--surface);border-radius:22px 22px 0 0;box-shadow:var(--shadow-l);
+    padding-bottom:calc(var(--safe-b) + 6px);
+  }
+  .ls-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 6px;}
+  .ls-head h2{font-family:var(--font-ui);font-size:16px;font-weight:700;margin:0;}
+  .ls-done{font-size:13px;font-weight:700;color:var(--accent);padding:6px 12px;border-radius:999px;background:var(--wash);}
+  .ls-body{overflow-y:auto;padding:4px 10px 12px;}
+  .lrow{width:100%;display:flex;align-items:center;gap:12px;padding:11px 10px;border-radius:14px;transition:background .15s;}
+  .lrow:active{background:var(--wash);}
+  .lrow .li{font-size:20px;flex:none;width:28px;text-align:center;}
+  .lrow .lt{flex:1;min-width:0;}
+  .lrow .lt b{display:block;font-size:14px;font-weight:700;font-family:var(--font-ui);}
+  .lrow .lt span{display:block;font-size:11.5px;color:var(--ink-3);margin-top:2px;}
+  .lsw{flex:none;width:46px;height:28px;border-radius:999px;background:rgba(22,32,46,.16);position:relative;transition:background .2s;}
+  .lsw::after{
+    content:"";position:absolute;top:2.5px;left:2.5px;width:23px;height:23px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 3px rgba(16,26,40,.3);transition:transform .2s;
+  }
+  .lrow.on .lsw{background:#34c759;}
+  .lrow.on .lsw::after{transform:translateX(18px);}
+  @media (min-width:900px){
+    .layer-sheet{left:auto;right:18px;bottom:18px;transform:none;border-radius:18px;width:360px;padding-bottom:6px;}
+    .sheet-backdrop{background:transparent;}
+  }
+
+  /* ================= password gate ================= */
+  #gate{
+    position:fixed;inset:0;z-index:3000;
+    background:var(--paper);
+    display:grid;place-items:center;padding:24px;
+  }
+  .gate-card{
+    width:min(340px,92vw);background:var(--surface);
+    border-radius:22px;box-shadow:var(--shadow-m);
+    padding:30px 26px 24px;text-align:center;
+  }
+  .gate-mark{
+    width:52px;height:52px;border-radius:16px;margin:0 auto 14px;
+    background:var(--ink);color:#fff;display:grid;place-items:center;
+    font-family:var(--font-ui);font-weight:900;font-size:18px;letter-spacing:1px;
+  }
+  .gate-t{font-family:var(--font-ui);font-weight:700;font-size:17px;margin:0 0 4px;}
+  .gate-d{color:var(--ink-2);font-size:13px;margin:0 0 18px;}
+  .gate-form{display:flex;flex-direction:column;gap:10px;}
+  .gate-in{
+    width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--hair);
+    background:var(--wash);font:inherit;font-size:16px;text-align:center;
+    letter-spacing:2px;color:var(--ink);outline:none;
+  }
+  .gate-in:focus{border-color:var(--accent);}
+  .gate-btn{
+    padding:12px;border-radius:12px;background:var(--ink);color:#fff;
+    font-family:var(--font-ui);font-weight:700;font-size:15px;
+  }
+  .gate-btn:active{transform:scale(.98);}
+  .gate-err{color:#c0392b;font-size:12.5px;min-height:16px;margin:2px 0 0;}
+  #gate.is-out{opacity:0;pointer-events:none;transition:opacity .35s;}
+  .doclist{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 18px;}
+  .doc{
+    padding:8px 12px;border-radius:10px;border:1px solid var(--hair);
+    background:var(--wash);font-size:13px;font-weight:500;color:var(--ink);
+    box-shadow:var(--shadow-s);
+  }
+  .doc:active{transform:scale(.97);}
+  .doc.is-busy{opacity:.5;pointer-events:none;}
+  .doc-overlay{position:fixed;inset:0;z-index:4000;background:var(--paper);display:flex;flex-direction:column;}
+  .doc-overlay .do-bar{flex:none;display:flex;justify-content:flex-end;padding:calc(var(--safe-t) + 8px) 12px 8px;}
+  .doc-overlay .do-close{padding:8px 14px;border-radius:10px;background:var(--ink);color:#fff;font-family:var(--font-ui);font-weight:700;font-size:13px;}
+  .doc-overlay iframe{flex:1;border:0;width:100%;background:#fff;}
+
+  /* ================= desktop: split view ================= */
+  @media (min-width:900px){
+    .app{display:grid;grid-template-columns:var(--panel-w) 1fr;grid-template-rows:auto minmax(0,1fr);height:100dvh;}
+    #mapDiv{position:relative;grid-area:1/2/3/3;width:auto;height:auto;}
+    .topbar{
+      position:static;grid-area:1/1/2/2;background:var(--surface);
+      padding:18px 0 12px;border-bottom:1px solid var(--hair-2);
+    }
+    .topbar-row{padding:0 22px 14px;}
+    .rail{padding:2px 16px 4px;}
+    .panel{
+      position:static;grid-area:2/1/3/2;height:auto!important;
+      border-radius:0;box-shadow:none;background:var(--surface);
+      border-right:1px solid var(--hair);touch-action:auto;
+    }
+    .grip{padding:20px 22px 14px;cursor:default;}
+    .grip-bar,.snap-btn{display:none;}
+    .p-head{padding-right:0;}
+    .p-title{font-size:22px;}
+    .p-body{padding:2px 22px 30px;}
+    .stop-card:hover{transform:translateX(2px);}
+  }
+  @media (min-width:1400px){:root{--panel-w:460px;}}
+
+  @media (prefers-reduced-motion:reduce){
+    *{transition-duration:.01ms!important;animation-duration:.01ms!important;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div id="mapDiv"></div>
+
+  <header class="topbar">
+    <div class="topbar-row">
+      <div class="brand">
+        <span class="brand-mark">東京</span>
+        <div>
+          <div class="brand-t">五日遊 · 路線圖行程</div>
+          <div class="brand-d">2026.08.28 – 09.02</div>
+        </div>
+      </div>
+      <button class="tz-btn" id="tzBtn" aria-label="切換台灣／日本時間顯示" title="切換時間顯示（台灣／日本）">🇯🇵 日本</button>
+      <button class="ghost-btn" id="layerBtn" aria-label="地圖顯示設定">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5Z"/><path d="M3 13l9 5 9-5"/><path d="M3 17.5l9 5 9-5"/></svg>
+      </button>
+      <button class="ghost-btn" id="fitBtn" aria-label="重新對準今天的路線">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+      </button>
+      <button class="ghost-btn" id="infoBtn" aria-label="行前資訊">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.6v.6"/></svg>
+      </button>
+    </div>
+    <nav class="rail" id="dayRail" aria-label="選擇日期"></nav>
+  </header>
+
+  <section class="panel" id="panel" data-snap="half">
+    <div class="grip" id="grip">
+      <div class="grip-bar"></div>
+      <div class="p-head">
+        <div class="p-eyebrow" id="pEyebrow"></div>
+        <h1 class="p-title" id="pTitle"></h1>
+        <p class="p-note" id="pNote"></p>
+      </div>
+      <button class="snap-btn" id="snapBtn" aria-label="展開或收合行程">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 15l6-6 6 6"/></svg>
+      </button>
+    </div>
+    <div class="p-body" id="pBody"></div>
+  </section>
+</div>
+
+<div id="gate" role="dialog" aria-label="輸入密碼">
+  <div class="gate-card">
+    <div class="gate-mark">東京</div>
+    <h2 class="gate-t">五日遊 · 路線圖行程</h2>
+    <p class="gate-d">示範版：所有訂位資料皆為虛構。密碼是 <b>demo</b></p>
+    <form class="gate-form" id="gateForm">
+      <input class="gate-in" id="gatePw" type="password" autocomplete="off" placeholder="demo" autofocus>
+      <button class="gate-btn" type="submit">解鎖</button>
+      <p class="gate-err" id="gateErr"></p>
+    </form>
+  </div>
+</div>
+
+<div class="sheet-backdrop" id="layerBackdrop" hidden></div>
+<section class="layer-sheet" id="layerSheet" hidden role="dialog" aria-label="地圖顯示設定">
+  <div class="ls-head">
+    <h2>地圖顯示</h2>
+    <button class="ls-done" id="layerClose">完成</button>
+  </div>
+  <div class="ls-body" id="layerRows"></div>
+</section>
+
+<script>
+const DAY_COLORS = {1:"#e0761a",2:"#00808f",3:"#2f8b52",4:"#c2317b",5:"#5157c4"};
+
+const DATA = [
+  { id:0, color:"var(--d5)", label:"總覽", date:"Overview", theme:"全程地圖", isOverview:true,
+    title:"五天路線總覽", note:"新宿為住宿基地，每天以放射狀往返橫濱、澀谷／銀座、高尾山。" },
+  {
+    id:1, color:"var(--d1)", label:"Day 1", date:"8/28（五）", theme:"抵達・新宿",
+    title:"抵達東京 → Check-in → 新宿商圈",
+    note:"N'EX 直達新宿，再轉丸之內線兩站到新宿御苑前放行李，傍晚吃燒鳥收工。",
+    weather:{t:"30–34°C", d:"午後有雷陣雨機率，備折疊傘"},
+    stops:[
+      {icon:"🚐", short:"機場接送", time:"<i class='tzTW'>03:40</i>", title:"機場接送出發", desc:"司機王小明（範例）<a href=\"tel:0912345678\">0912-345-678</a>，灰色福斯 Caddy，車牌 ABC-1234。車資 800 元，上車前核對車牌。", tags:["🚐 專車接送", "💴 800 元"], map:"台北車站", coord:[25.0479,121.5171]},
+      {type:"transit", mode:"car", color:"#8b97a7", badge:"🚐", line:"專車接送　台北車站 → 桃園機場 T1", dur:"車程約 40 分（約 40 km，走國道一號）", fare:"800 元", note:"凌晨無車流，約 <i class='tzTW'>04:15</i> 前抵達 T1；酷航櫃檯起飛前 60 分關櫃。"},
+      {icon:"✈️", short:"桃園出發", time:"<i class='tzTW'>06:45</i>", title:"桃園機場出發", desc:"酷航 TR866，T1 出發。<i class='tzTW'>04:15</i> 前抵達櫃檯報到，留足託運與安檢時間。", tags:["✈️ 去程航班"]},
+      {type:"transit", mode:"flight", color:"#8b97a7", badge:"TR866", line:"酷航　桃園 → 成田", dur:"約 3 小時", via:"直飛，無中停"},
+      {icon:"🛬", short:"抵達成田", time:"11:15", title:"抵達成田機場 T1", desc:"入境、提領行李後，到 B1 的 JR 東日本旅行服務中心憑護照買 N'EX 來回票（5,200 円／人，一併劃好 9/1 回程座位），車站就在航廈地下。", tags:["成田機場", "⏱️ 入境約留 1 小時"], map:"成田国際空港 第1ターミナル", coord:[35.7636,140.3859]},
+      {type:"transit", mode:"rail", color:"#b02a37", badge:"N'EX", line:"成田特快　成田空港 → 新宿",
+       dur:"約 80 分", fare:"來回票 5,200 円（單程換算 2,600 円）", via:"經 空港第2ビル · 東京 · 品川 · 澀谷",
+       note:"全車指定席，班距約 30–60 分，實際班次以當日時刻表為準。",
+       path:[[35.76512,140.38609],[35.76957,140.38879],[35.77063,140.38892],[35.77164,140.38857],[35.78414,140.3795],[35.78602,140.37789],[35.78866,140.37479],[35.79079,140.37093],[35.79201,140.36746],[35.79277,140.36351],[35.79621,140.32667],[35.79719,140.31775],[35.79713,140.31655],[35.7967,140.31539],[35.79577,140.31435],[35.79362,140.31261],[35.79263,140.31209],[35.79163,140.31185],[35.78881,140.31198],[35.78522,140.31157],[35.78443,140.31166],[35.78372,140.31202],[35.7813,140.31448],[35.78053,140.31478],[35.77975,140.3148],[35.77586,140.31319],[35.77125,140.3086],[35.76973,140.30774],[35.76874,140.30757],[35.76676,140.30768],[35.76452,140.30679],[35.76357,140.30661],[35.75824,140.30787],[35.75729,140.30784],[35.75641,140.3075],[35.75562,140.30688],[35.75498,140.30606],[35.753,140.30178],[35.74803,140.29238],[35.7468,140.29126],[35.74422,140.29019],[35.74247,140.28866],[35.73987,140.28706],[35.7385,140.28584],[35.73693,140.28297],[35.73615,140.28122],[35.73556,140.27891],[35.73472,140.27746],[35.7273,140.27221],[35.72417,140.27167],[35.72079,140.27261],[35.72001,140.27265],[35.7187,140.2722],[35.71781,140.27149],[35.7169,140.27],[35.71196,140.25981],[35.71113,140.25892],[35.70903,140.2578],[35.70831,140.25723],[35.70749,140.25595],[35.70713,140.25475],[35.70649,140.25092],[35.70666,140.24786],[35.70732,140.24578],[35.71039,140.23834],[35.7109,140.23633],[35.70978,140.22607],[35.70901,140.22091],[35.70862,140.21948],[35.70789,140.21807],[35.69707,140.2064],[35.69485,140.20493],[35.6906,140.20382],[35.68913,140.20309],[35.68383,140.19875],[35.68152,140.19655],[35.68025,140.19429],[35.67891,140.18985],[35.67821,140.18832],[35.67718,140.18706],[35.67333,140.1836],[35.67234,140.18234],[35.66479,140.16998],[35.66127,140.16114],[35.66036,140.1596],[35.6594,140.15852],[35.658,140.15746],[35.65652,140.15682],[35.64146,140.15414],[35.63973,140.15339],[35.63826,140.1522],[35.62158,140.12931],[35.61367,140.11728],[35.61304,140.11556],[35.61336,140.11341],[35.61484,140.11067],[35.61614,140.10913],[35.62018,140.10535],[35.62533,140.10095],[35.64737,140.08536],[35.64899,140.08393],[35.65022,140.08205],[35.65094,140.08002],[35.65215,140.07107],[35.65255,140.06951],[35.65654,140.06161],[35.68665,140.02582],[35.68832,140.02405],[35.69757,140.01282],[35.69828,140.01176],[35.69909,140.00995],[35.69957,140.00749],[35.70237,139.97822],[35.702,139.9738],[35.70265,139.9702],[35.71072,139.95199],[35.72826,139.90957],[35.73109,139.90316],[35.73228,139.89986],[35.73527,139.89293],[35.73586,139.89079],[35.73598,139.8884],[35.73565,139.88634],[35.73486,139.88431],[35.73343,139.88193],[35.72386,139.86816],[35.71937,139.86217],[35.71765,139.85906],[35.71397,139.85336],[35.70572,139.84126],[35.70492,139.84032],[35.70347,139.8391],[35.6997,139.83672],[35.69869,139.83549],[35.69819,139.83443],[35.69764,139.83181],[35.6959,139.79737],[35.69645,139.79124],[35.69633,139.78896],[35.69582,139.78645],[35.69522,139.78486],[35.69205,139.78076],[35.69002,139.77728],[35.68718,139.7689],[35.68676,139.76856],[35.68448,139.76771],[35.6832,139.76698],[35.68005,139.76417],[35.67376,139.76198],[35.67218,139.76074],[35.66852,139.75881],[35.66764,139.75868],[35.66455,139.75889],[35.66148,139.75932],[35.65787,139.7592],[35.65166,139.75727],[35.64896,139.75561],[35.64647,139.7535],[35.64495,139.75071],[35.64261,139.74538],[35.64066,139.74352],[35.63931,139.74269],[35.636,139.74217],[35.63022,139.73978],[35.62868,139.73955],[35.62925,139.73864],[35.63055,139.73873],[35.63193,139.73928],[35.63053,139.73863],[35.62947,139.73846],[35.62506,139.7387],[35.61924,139.73712],[35.61783,139.73599],[35.617,139.73421],[35.61691,139.73199],[35.61767,139.73025],[35.62016,139.72798],[35.62693,139.72297],[35.62808,139.72144],[35.62979,139.71784],[35.63068,139.71685],[35.63183,139.71628],[35.63825,139.71465],[35.65018,139.70815],[35.65151,139.70722],[35.65661,139.7026],[35.65802,139.70159],[35.65961,139.70132],[35.66215,139.70146],[35.67021,139.70252],[35.67203,139.70292],[35.67505,139.70397],[35.67594,139.70407],[35.67882,139.70377],[35.68961,139.70098]],
+       stations:[{name:"空港第2ビル",coord:[35.7719,140.3928]},{name:"東京",coord:[35.6812,139.7671]},{name:"品川",coord:[35.6285,139.7387]},{name:"澀谷",coord:[35.6580,139.7016]}]},
+      {icon:"🚉", short:"新宿轉乘", time:"13:50", title:"新宿站轉乘丸之內線", desc:"N'EX 停靠地下月台，往丸之內線要走地下通道約 8–10 分鐘，拖行李請多抓一點時間。", tags:["🚉 站內轉乘"], map:"新宿駅", coord:[35.6896,139.7006]},
+      {type:"transit", mode:"rail", color:"#f0332e", badge:"M", line:"丸之內線　新宿 → 新宿御苑前",
+       dur:"4 分（2 站）", fare:"180 円", via:"經 新宿三丁目",
+       path:[[35.69207,139.69943],[35.69222,139.70135],[35.69214,139.70201],[35.689,139.70895],[35.68856,139.71073]],
+       stations:[{name:"新宿三丁目",coord:[35.6907,139.7046]}]},
+      {type:"transit", mode:"walk", color:"#8b97a7", badge:"🚶", line:"新宿御苑前 1 號出口 → 飯店", dur:"步行 2 分（約 200 m）",
+       from:[35.6883,139.7106]},
+      {icon:"🏨", short:"飯店寄放", time:"14:15", title:"東京新宿区 N.U.T.S 酒店", desc:"Check-in 16:00 才開始，可先寄放行李、輕裝出門。", tags:["🏨 住宿", "新宿 1-16-5"], map:"Shinjuku City Hotel N.U.T.S Tokyo", coord:[35.6897,139.7108]},
+      {icon:"🛍️", short:"新宿逛街", time:"15:00", title:"新宿商圈逛街", desc:"伊勢丹百貨、Lumine、Bic Camera／友都八喜買電器。從飯店走到新宿三丁目一帶約 8 分鐘。", tags:["🛍️ 購物"], map:"新宿マルイ本館", coord:[35.6909,139.7042]},
+      {icon:"🍢", short:"歌舞伎町晚餐", time:"19:00", title:"歌舞伎町／思出橫丁晚餐", desc:"燒鳥、居酒屋小巷弄，結束第一天。", tags:["🍢 晚餐"], map:"思い出横丁", coord:[35.6927,139.6996]}
+    ]
+  },
+  {
+    id:2, color:"var(--d2)", label:"Day 2", date:"8/29（六）", theme:"橫濱・水陸",
+    title:"橫濱一日遊：赤磚倉庫 + 黃昏鴨子船",
+    note:"鴨子船搭 18:10 黃昏場（柯南聯名 Twilight Cruise），建議先於 book.skybus.jp 預約，並提早 30–40 分到售票櫃檯報到；附周邊商品票只在現場販售、數量有限。",
+    weather:{t:"30–34°C", d:"沿海風大，建議帶薄外套防冷氣"},
+    stops:[
+      {type:"transit", mode:"rail", color:"#e21f26", badge:"湘新", line:"湘南新宿線　新宿 → 橫濱",
+       dur:"約 30 分", via:"經 澀谷 · 大崎 · 武藏小杉",
+       path:[[35.68961,139.70098],[35.67882,139.70377],[35.67594,139.70407],[35.67505,139.70397],[35.6705,139.70257],[35.66331,139.70156],[35.65961,139.70132],[35.65773,139.70176],[35.65512,139.7039],[35.65151,139.70722],[35.65018,139.70815],[35.63825,139.71465],[35.63183,139.71628],[35.63089,139.71671],[35.62979,139.71784],[35.62808,139.72144],[35.62666,139.72322],[35.62159,139.72703],[35.62301,139.72599],[35.61891,139.72871],[35.61711,139.73037],[35.6153,139.73164],[35.61425,139.73203],[35.61303,139.73185],[35.61215,139.73136],[35.61145,139.73064],[35.6109,139.72957],[35.61007,139.72693],[35.60928,139.72593],[35.6079,139.72476],[35.60552,139.72335],[35.59728,139.71953],[35.59613,139.71855],[35.59491,139.71685],[35.59439,139.71561],[35.59147,139.70569],[35.58373,139.67842],[35.57957,139.66669],[35.57885,139.66524],[35.57727,139.66378],[35.57631,139.66339],[35.57506,139.66335],[35.56358,139.66696],[35.57415,139.66338],[35.575,139.66273],[35.5758,139.66174],[35.57651,139.65969],[35.5758,139.66174],[35.575,139.66273],[35.57415,139.66338],[35.56498,139.66645],[35.56913,139.6652],[35.56472,139.6668],[35.55488,139.67011],[35.5479,139.67331],[35.53773,139.67645],[35.5357,139.67684],[35.52743,139.67957],[35.52365,139.6804],[35.52091,139.68125],[35.51999,139.68131],[35.51897,139.6811],[35.51798,139.68057],[35.51621,139.67888],[35.51502,139.6781],[35.50918,139.67624],[35.50371,139.67494],[35.50246,139.67424],[35.50106,139.67293],[35.49633,139.66734],[35.49473,139.66499],[35.49237,139.66281],[35.49083,139.66106],[35.49002,139.65982],[35.48616,139.65224],[35.48566,139.65019],[35.48545,139.64703],[35.48503,139.64459],[35.48301,139.63852],[35.48235,139.63722],[35.47829,139.63327],[35.46812,139.6243],[35.4659,139.62212]],
+       stations:[{name:"澀谷",coord:[35.6580,139.7016]},{name:"大崎",coord:[35.6197,139.7286]},{name:"武藏小杉",coord:[35.5766,139.6597]}]},
+      {icon:"🚆", short:"橫濱站", time:"09:30", title:"新宿站 → 橫濱站", desc:"搭湘南新宿線直達，約 30 分鐘。", tags:["🚆 約 30 分"], map:"横浜駅", coord:[35.4658,139.6222]},
+      {type:"transit", mode:"walk", color:"#8b97a7", badge:"🚶", line:"橫濱站 → 日本丸紀念公園", dur:"步行約 20 分（約 1.6 km），也可搭 JR 一站到櫻木町"},
+      {icon:"⛵", short:"日本丸散步", time:"10:00", title:"日本丸紀念公園・汽車道散步", desc:"沿港灣散步拍照，順便確認傍晚 SKY DUCK 的上車地點（售票櫃檯前）。", tags:["⛵ 港灣散步"], map:"日本丸メモリアルパーク", coord:[35.4536,139.6326]},
+      {type:"transit", mode:"walk", color:"#8b97a7", badge:"🚶", line:"日本丸 → 紅磚倉庫（經汽車道）", dur:"步行約 18 分（約 1.4 km）"},
+      {icon:"🧱", short:"紅磚倉庫", time:"11:00", title:"橫濱紅磚倉庫", desc:"逛文創小店、文青雜貨，Bills 鬆餅下午茶。", tags:["🏛️ 文創", "☕ 下午茶"], map:"横浜赤レンガ倉庫", coord:[35.4526,139.6425]},
+      {type:"transit", mode:"walk", color:"#8b97a7", badge:"🚶", line:"紅磚倉庫 → 中華街（經山下臨港線步道）", dur:"步行約 15 分（約 1.2 km）"},
+      {icon:"🥟", short:"中華街午餐", time:"12:45", title:"橫濱中華街午餐", desc:"小籠包、麻婆豆腐名店雲集，吃飽再逛關帝廟周邊。", tags:["🥟 午餐"], map:"横浜中華街", coord:[35.4431,139.6441]},
+      {icon:"🌳", short:"山下公園", time:"14:30", title:"山下公園・海濱散步", desc:"看冰川丸帆船與港灣景色，沿海邊步道悠閒消化。", tags:["🌳 海濱"], map:"山下公園", coord:[35.4459,139.6503]},
+      {type:"transit", mode:"walk", color:"#8b97a7", badge:"🚶", line:"山下公園 → 運河パーク站（經象鼻公園）", dur:"步行約 20 分（約 1.6 km）"},
+      {icon:"🚡", short:"空中纜車", time:"16:30", title:"Yokohama Air Cabin（運河パーク → 櫻木町）", desc:"搭都市纜車從空中看港灣，下站後步行 5 分回日本丸，途中可逛 MARK IS 或 Colette Mare。", tags:["🚡 纜車", "約 10 分"], map:"YOKOHAMA AIR CABIN 運河パーク駅", coord:[35.4533,139.6383]},
+      {icon:"🎫", short:"日本丸報到", time:"17:30", title:"日本丸紀念公園報到", desc:"SKY DUCK 售票櫃檯前報到上車，柯南聯名彩繪車廂，車內 AI 即時翻譯（77 語言）。大型行李需在乘車口寄放。", tags:["🦆 鴨子船", "提早 30–40 分報到"], map:"日本丸メモリアルパーク", coord:[35.4536,139.6326]},
+      {icon:"🦆", short:"黃昏巡遊", time:"18:10", title:"SKY DUCK 黃昏水陸巡遊（Twilight Cruise）", desc:"陸上 10 分＋水上 30 分，從海上看みなとみらい華燈初上。假日票價：大人 4,000 円／兒童 2,000 円。下船在 Tower D 棟前，與上車處不同。", tags:["🌆 18:10 出發", "全程約 40 分"], coord:[35.4520,139.6432]},
+      {icon:"🍽️", short:"港未來晚餐", time:"19:15", title:"みなとみらい晚餐・摩天輪夜景", desc:"下船後到橫濱 World Porters 或櫻木町 Colette Mare 吃晚餐，順便看 Cosmo Clock 21 摩天輪點燈。", tags:["🍽️ 晚餐", "🌃 夜景"], map:"横浜ワールドポーターズ", coord:[35.4540,139.6390]},
+      {icon:"🚆", short:"返回新宿", time:"21:00", title:"返回新宿", desc:"從櫻木町搭 JR 根岸線到橫濱站，轉湘南新宿線回新宿休息。", tags:["🚆 返程"], map:"新宿駅", coord:[35.6896,139.7006]}
+    ]
+  },
+  {
+    id:3, color:"var(--d3)", label:"Day 3", date:"8/30（日）", theme:"澀谷・銀座",
+    title:"東京潮流與精緻時尚：澀谷 → 銀座",
+    note:"09:45 從飯店出發、10:00 著付（兩人約 2 小時）→ 穿浴衣午餐、新宿御苑拍照 → 14:30 回店歸還 → 15:00 轉往澀谷、銀座，晚餐改在 Ginza Six。",
+    weather:{t:"30–34°C", d:"市區悶熱，注意防曬與補水"},
+    stops:[
+      {icon:"🏨", short:"飯店出發", time:"09:45", title:"從飯店出發", desc:"沿新宿通往西步行約 10 分鐘到 VASARA（ペガサス館 7F，1 樓搭電梯上樓），預留一點找路時間。", tags:["🚶 約 10 分"], map:"Shinjuku City Hotel N.U.T.S Tokyo", coord:[35.6897,139.7108]},
+      {type:"transit", mode:"walk", color:"#8b97a7", badge:"🚶", line:"飯店 → VASARA 新宿駅前店", dur:"步行約 10 分（約 750 m）"},
+      {icon:"👘", short:"浴衣著付", time:"10:00", title:"VASARA 浴衣著付（新宿駅前店）", desc:"已預約 2 名：男生浴衣選び放題＋女生 Retro 浴衣（含髮型設計）。挑選＋著付＋髮型兩人約 2 小時，記得帶護照；遲到 30 分內可直接前往。", tags:["👘 已預約 10:00", "🪪 帶護照", "⏱️ 約 2 小時"], map:"東京都新宿区新宿3丁目31-5 ペガサス館", coord:[35.6907,139.7038]},
+      {icon:"🍜", short:"浴衣午餐", time:"12:00", title:"新宿三丁目周邊輕食午餐", desc:"穿浴衣不方便吃大餐，就近選好入座的定食或咖啡簡餐，約 40 分鐘。", tags:["🍜 午餐"], map:"新宿三丁目駅", coord:[35.6907,139.7046]},
+      {type:"transit", mode:"walk", color:"#8b97a7", badge:"🚶", line:"新宿三丁目 → 新宿御苑 新宿門", dur:"步行約 6 分（約 450 m）"},
+      {icon:"🌳", short:"御苑拍照", time:"12:45", title:"新宿御苑 浴衣散步拍照", desc:"從新宿門入園（門票 500 円）。日本庭園、大草坪、溫室都是浴衣拍照好點；這天開到 18:00、週日有開，苑內禁酒。", tags:["🌳 拍照", "🎫 500 円"], map:"新宿御苑 新宿門", coord:[35.6883,139.7075]},
+      {type:"transit", mode:"walk", color:"#8b97a7", badge:"🚶", line:"新宿御苑 → VASARA（原路折返）", dur:"步行約 6 分"},
+      {icon:"👘", short:"歸還浴衣", time:"14:30", title:"回 VASARA 歸還浴衣", desc:"換回自己的衣服、取回寄放物品，約 30 分鐘，之後轉往澀谷。", tags:["👘 歸還", "⏱️ 約 30 分"], map:"東京都新宿区新宿3丁目31-5 ペガサス館", coord:[35.6907,139.7038]},
+      {type:"transit", mode:"metro", color:"#9c5e31", badge:"F", line:"副都心線　新宿三丁目 → 澀谷", dur:"急行約 5 分", fare:"180 円", via:"經 明治神宮前〈原宿〉", note:"VASARA 樓下走 2 分即新宿三丁目站；亦可從新宿站搭 JR。"},
+      {icon:"📍", short:"澀谷十字路口", time:"15:15", title:"Shibuya Crossing", desc:"世界知名十字路口，感受人潮川流。", tags:["📍 地標"], map:"Shibuya Crossing", coord:[35.6595,139.7005]},
+      {icon:"🌇", short:"Shibuya Sky", time:"15:45", title:"Shibuya Sky 展望台", desc:"登高俯瞰澀谷全景，建議事先預約 16:00 前後的時段票。", tags:["🌇 展望台"], map:"Shibuya Sky", coord:[35.6587,139.7020]},
+      {icon:"🛍️", short:"109／Parco", time:"17:00", title:"SHIBUYA109 ／ Parco", desc:"逛街，Parco 內有 Nintendo TOKYO、Pokémon Center。", tags:["🛍️ 購物", "🎮 任天堂/寶可夢"], map:"Parco 渋谷", coord:[35.6620,139.6988]},
+      {type:"transit", mode:"rail", color:"#f39700", badge:"G", line:"銀座線　澀谷 → 銀座",
+       dur:"約 16 分", via:"經 表參道 · 赤坂見附 · 新橋",
+       path:[[35.65882,139.70133],[35.65929,139.70332],[35.65993,139.70539],[35.66044,139.70633],[35.66315,139.7106],[35.66362,139.71112],[35.66991,139.71675],[35.67036,139.7173],[35.67267,139.72393],[35.6738,139.72762],[35.67449,139.72931],[35.67481,139.73113],[35.6768,139.73444],[35.67713,139.73507],[35.67723,139.73544],[35.67725,139.73602],[35.67719,139.73632],[35.67685,139.73699],[35.67544,139.7381],[35.67398,139.73868],[35.67348,139.73906],[35.67112,139.74279],[35.67071,139.74427],[35.67018,139.74664],[35.67018,139.74737],[35.6704,139.74844],[35.67043,139.74922],[35.6697,139.75132],[35.66785,139.75729],[35.66693,139.75975],[35.66694,139.76045],[35.66717,139.76089],[35.66802,139.76165],[35.67115,139.76491]],
+       stations:[{name:"表參道",coord:[35.6652,139.7126]},{name:"赤坂見附",coord:[35.6767,139.7370]},{name:"新橋",coord:[35.6663,139.7583]}]},
+      {icon:"🚇", short:"轉往銀座", time:"18:15", title:"轉往銀座", desc:"搭地鐵約 20 分鐘直達銀座。", tags:["🚇 約 20 分"], map:"銀座駅", coord:[35.6717,139.7640]},
+      {icon:"💎", short:"Ginza Six", time:"18:45", title:"Ginza Six ／ 三越百貨", desc:"旗艦店購物、精緻餐飲晚餐，享受銀座夜晚氣氛。", tags:["🛍️ 精品", "🍽️ 晚餐"], map:"GINZA SIX", coord:[35.6698,139.7642]}
+    ]
+  },
+  {
+    id:4, color:"var(--d4)", label:"Day 4", date:"8/31（一）", theme:"高尾山",
+    title:"近郊大自然巡禮：高尾山一日遊",
+    note:"全天行程，早出發避開人潮，山上溫差較大記得備薄外套。",
+    weather:{t:"28–33°C（山區稍涼）", d:"午後山區易起霧、有雷陣雨"},
+    stops:[
+      {icon:"🚆", short:"京王線", time:"08:30", title:"新宿站搭京王線特急", desc:"直達高尾山口站，車程約 50 分鐘。", tags:["🚆 約 50 分"], map:"新宿駅", coord:[35.6896,139.7006]},
+      {type:"transit", mode:"rail", color:"#e4007f", badge:"京王", line:"京王線特急　新宿 → 高尾山口",
+       dur:"約 50 分", via:"經 明大前 · 調布 · 北野（直通高尾線）",
+       path:[[35.68901,139.69934],[35.68851,139.69925],[35.68816,139.69892],[35.68719,139.69705],[35.68674,139.69541],[35.68616,139.69427],[35.68403,139.69222],[35.68237,139.68896],[35.68026,139.68622],[35.67954,139.68384],[35.6772,139.67849],[35.67654,139.67591],[35.6704,139.65746],[35.66628,139.64345],[35.66615,139.64165],[35.67069,139.61069],[35.67059,139.60834],[35.66142,139.58237],[35.65031,139.55862],[35.6497,139.55669],[35.64965,139.55491],[35.65014,139.55034],[35.65453,139.53576],[35.66324,139.51647],[35.6657,139.50421],[35.66986,139.49235],[35.67279,139.47711],[35.6729,139.47481],[35.67215,139.47095],[35.67174,139.47012],[35.67115,139.46947],[35.67042,139.46907],[35.66346,139.46701],[35.66252,139.46649],[35.66157,139.46557],[35.66085,139.46439],[35.66046,139.4632],[35.65894,139.45347],[35.6586,139.45251],[35.65755,139.45151],[35.65183,139.44942],[35.6512,139.4486],[35.6508,139.44689],[35.65074,139.44533],[35.65244,139.43786],[35.65305,139.43692],[35.65649,139.4336],[35.65726,139.43204],[35.66102,139.41639],[35.66334,139.4106],[35.66387,139.40526],[35.66346,139.40412],[35.66073,139.39882],[35.65339,139.39053],[35.64898,139.3818],[35.64441,139.37675],[35.64301,139.37484],[35.64271,139.37415],[35.64259,139.37312],[35.64305,139.35794],[35.6465,139.3495],[35.64678,139.34787],[35.64617,139.34535],[35.64436,139.34285],[35.64367,139.34076],[35.64379,139.33919],[35.64539,139.33344],[35.64564,139.33131],[35.64549,139.32925],[35.64426,139.32365],[35.64483,139.31451],[35.64476,139.31235],[35.64447,139.31094],[35.64215,139.3038],[35.64037,139.29599],[35.64047,139.29435],[35.64169,139.28882],[35.64156,139.28604],[35.64206,139.28353],[35.64021,139.27449],[35.63929,139.27267],[35.63833,139.27192],[35.63661,139.27193],[35.636,139.27172],[35.63206,139.26967]],
+       stations:[{name:"調布",coord:[35.6517,139.5442]},{name:"府中",coord:[35.6720,139.4800]},{name:"高幡不動",coord:[35.6597,139.4118]},{name:"高尾",coord:[35.6423,139.2820]}]},
+      {icon:"🚡", short:"纜車上山", time:"09:30", title:"纜車／吊椅上山", desc:"清瀧站搭乘登山纜車或吊椅前往山腰。", tags:["🚡 纜車"], map:"高尾登山電鉄 清滝駅", coord:[35.6311,139.2668]},
+      {type:"transit", mode:"rail", color:"#c8161d", badge:"🚡", line:"高尾登山電鉄纜車　清瀧 → 高尾山（上山）",
+       dur:"約 6 分", fare:"單程 490 円／來回 950 円", via:"最大坡度 31.18°，日本鐵道第一陡",
+       path:[[35.6311,139.2669],[35.6311,139.2655],[35.6311,139.2646],[35.6311,139.2619],[35.6311,139.2607],[35.6311,139.2598],[35.6311,139.2590],[35.6311,139.2569],[35.6311,139.2564],[35.6312,139.2561]],
+       stations:[{name:"高尾山",coord:[35.6312,139.2561]}]},
+      {icon:"⛩️", short:"藥王院參拜", time:"10:30", title:"高尾山藥王院參拜", desc:"從高尾山駅沿一號路參道健行約 20 分，感受山林芬多精，參拜藥王院。", tags:["⛩️ 參拜", "🥾 健行"], map:"高尾山薬王院", coord:[35.6259,139.2503]},
+      {type:"transit", mode:"walk", color:"#8b97a7", badge:"🚶", line:"藥王院 → 高尾山駅（一號路參道原路折返）", dur:"步行約 20 分",
+       to:[35.6312,139.2561]},
+      {type:"transit", mode:"rail", color:"#c8161d", badge:"🚡", line:"高尾登山電鉄纜車　高尾山 → 清瀧（下山）",
+       dur:"約 6 分", note:"班距約 15 分，旺季假日人多需排隊；也可改搭吊椅（エコーリフト）下山。",
+       path:[[35.6312,139.2561],[35.6311,139.2564],[35.6311,139.2569],[35.6311,139.2590],[35.6311,139.2598],[35.6311,139.2607],[35.6311,139.2619],[35.6311,139.2646],[35.6311,139.2655],[35.6311,139.2669]]},
+      {icon:"🍜", short:"蕎麥麵午餐", time:"13:00", title:"高橋家蕎麥麵", desc:"高尾山口站周邊名物手打蕎麥麵。", tags:["🍜 午餐"], map:"高尾山 高橋家", coord:[35.6314,139.2679]},
+      {icon:"♨️", short:"極樂湯", time:"14:30", title:"極樂湯溫泉", desc:"下山後泡湯放鬆雙腳，洗去一身汗水。", tags:["♨️ 溫泉"], map:"極楽湯 高尾山口駅前", coord:[35.6322,139.2695]},
+      {icon:"🚆", short:"返回新宿", time:"18:00", title:"返回新宿", desc:"京王線直達，晚上飯店附近輕鬆用餐休息。", tags:["🚆 返程"], map:"新宿駅", coord:[35.6896,139.7006]}
+    ]
+  },
+  {
+    id:5, color:"var(--d5)", label:"Day 5", date:"9/1（二）", theme:"歸途",
+    title:"最後補貨與返台",
+    note:"回程航班 22:40 起飛，建議最晚 19:40 前抵達機場辦理登機。",
+    weather:{t:"30–34°C", d:"最後一天仍悶熱，輕裝方便活動"},
+    stops:[
+      {icon:"🏨", short:"飯店退房", time:"10:00前", title:"飯店退房", desc:"行李可寄放前台或車站置物櫃，輕裝繼續逛。", tags:["🏨 退房"], map:"Shinjuku City Hotel N.U.T.S Tokyo", coord:[35.6897,139.7108]},
+      {icon:"🛍️", short:"最後補貨", time:"11:00", title:"新宿最後補貨／早午餐", desc:"把握最後時間補買伴手禮，享用早午餐。", tags:["🛍️ 最後採購"], map:"新宿駅", coord:[35.6896,139.7006]},
+      {icon:"🚆", short:"機場特快", time:"18:00前", title:"搭 N'EX 前往成田", desc:"用 8/28 買的 N'EX 來回票回程段（已劃位）從新宿直達成田空港第2・第3ターミナル站。", tags:["🚆 N'EX 來回票"]},
+      {type:"transit", mode:"rail", color:"#b02a37", badge:"N'EX", line:"成田特快　新宿 → 成田空港（T2·T3）",
+       dur:"約 85 分", via:"經 澀谷 · 品川 · 東京",
+       note:"若改搭 Skyliner 需先到日暮里／上野轉乘，走的是另一條路線。",
+       path:[[35.68961,139.70098],[35.67882,139.70377],[35.67594,139.70407],[35.67505,139.70397],[35.67203,139.70292],[35.67021,139.70252],[35.66215,139.70146],[35.65961,139.70132],[35.65802,139.70159],[35.65661,139.7026],[35.65151,139.70722],[35.65018,139.70815],[35.63825,139.71465],[35.63183,139.71628],[35.63068,139.71685],[35.62979,139.71784],[35.62808,139.72144],[35.62693,139.72297],[35.62016,139.72798],[35.61767,139.73025],[35.61691,139.73199],[35.617,139.73421],[35.61783,139.73599],[35.61924,139.73712],[35.62506,139.7387],[35.62947,139.73846],[35.63053,139.73863],[35.63193,139.73928],[35.63055,139.73873],[35.62925,139.73864],[35.62868,139.73955],[35.63022,139.73978],[35.636,139.74217],[35.63931,139.74269],[35.64066,139.74352],[35.64261,139.74538],[35.64495,139.75071],[35.64647,139.7535],[35.64896,139.75561],[35.65166,139.75727],[35.65787,139.7592],[35.66148,139.75932],[35.66455,139.75889],[35.66764,139.75868],[35.66852,139.75881],[35.67218,139.76074],[35.67376,139.76198],[35.68005,139.76417],[35.6832,139.76698],[35.68448,139.76771],[35.68676,139.76856],[35.68718,139.7689],[35.69002,139.77728],[35.69205,139.78076],[35.69522,139.78486],[35.69582,139.78645],[35.69633,139.78896],[35.69645,139.79124],[35.6959,139.79737],[35.69764,139.83181],[35.69819,139.83443],[35.69869,139.83549],[35.6997,139.83672],[35.70347,139.8391],[35.70492,139.84032],[35.70572,139.84126],[35.71397,139.85336],[35.71765,139.85906],[35.71937,139.86217],[35.72386,139.86816],[35.73343,139.88193],[35.73486,139.88431],[35.73565,139.88634],[35.73598,139.8884],[35.73586,139.89079],[35.73527,139.89293],[35.73228,139.89986],[35.73109,139.90316],[35.72826,139.90957],[35.71072,139.95199],[35.70265,139.9702],[35.702,139.9738],[35.70237,139.97822],[35.69957,140.00749],[35.69909,140.00995],[35.69828,140.01176],[35.69757,140.01282],[35.68832,140.02405],[35.68665,140.02582],[35.65654,140.06161],[35.65255,140.06951],[35.65215,140.07107],[35.65094,140.08002],[35.65022,140.08205],[35.64899,140.08393],[35.64737,140.08536],[35.62533,140.10095],[35.62018,140.10535],[35.61614,140.10913],[35.61484,140.11067],[35.61336,140.11341],[35.61304,140.11556],[35.61367,140.11728],[35.62158,140.12931],[35.63826,140.1522],[35.63973,140.15339],[35.64146,140.15414],[35.65652,140.15682],[35.658,140.15746],[35.6594,140.15852],[35.66036,140.1596],[35.66127,140.16114],[35.66479,140.16998],[35.67234,140.18234],[35.67333,140.1836],[35.67718,140.18706],[35.67821,140.18832],[35.67891,140.18985],[35.68025,140.19429],[35.68152,140.19655],[35.68383,140.19875],[35.68913,140.20309],[35.6906,140.20382],[35.69485,140.20493],[35.69707,140.2064],[35.70789,140.21807],[35.70862,140.21948],[35.70901,140.22091],[35.70978,140.22607],[35.7109,140.23633],[35.71039,140.23834],[35.70732,140.24578],[35.70666,140.24786],[35.70649,140.25092],[35.70713,140.25475],[35.70749,140.25595],[35.70831,140.25723],[35.70903,140.2578],[35.71113,140.25892],[35.71196,140.25981],[35.7169,140.27],[35.71781,140.27149],[35.7187,140.2722],[35.72001,140.27265],[35.72079,140.27261],[35.72417,140.27167],[35.7273,140.27221],[35.73472,140.27746],[35.73556,140.27891],[35.73615,140.28122],[35.73693,140.28297],[35.7385,140.28584],[35.73987,140.28706],[35.74247,140.28866],[35.74422,140.29019],[35.7468,140.29126],[35.74803,140.29238],[35.753,140.30178],[35.75498,140.30606],[35.75562,140.30688],[35.75641,140.3075],[35.75729,140.30784],[35.75824,140.30787],[35.76357,140.30661],[35.76452,140.30679],[35.76676,140.30768],[35.76874,140.30757],[35.76973,140.30774],[35.77125,140.3086],[35.77586,140.31319],[35.77975,140.3148],[35.78053,140.31478],[35.7813,140.31448],[35.78372,140.31202],[35.78443,140.31166],[35.78522,140.31157],[35.78881,140.31198],[35.79163,140.31185],[35.79263,140.31209],[35.79362,140.31261],[35.79577,140.31435],[35.7967,140.31539],[35.79713,140.31655],[35.79719,140.31775],[35.79621,140.32667],[35.79277,140.36351],[35.79201,140.36746],[35.79079,140.37093],[35.78866,140.37479],[35.78602,140.37789],[35.78414,140.3795],[35.77164,140.38857],[35.77063,140.38892]],
+       stations:[{name:"澀谷",coord:[35.6580,139.7016]},{name:"品川",coord:[35.6285,139.7387]},{name:"東京",coord:[35.6812,139.7671]}]},
+      {icon:"🛄", short:"登機手續", time:"19:40前", title:"抵達機場辦理登機", desc:"捷星日本 GK011，第 3 航廈。", tags:["🛄 登機手續", "🧳 託運 25kg＋20kg 已加購"], map:"成田国際空港 第3ターミナル", coord:[35.7788,140.3847]},
+      {icon:"✈️", short:"起飛返台", time:"22:40", title:"起飛返台", desc:"GK011 東京成田 → 台北桃園，隔日 <i class='tzTW'>01:30</i> 抵達 T1。", tags:["✈️ 回程航班"]}
+    ]
+  },
+  {
+    id:6, color:"var(--d5)", label:"行前", date:"Info", theme:"預約・天氣・保險",
+    isInfo:true,
+    title:"行前準備與旅平險應變",
+    note:"Sky Duck 與浴衣已預約完成；N'EX 來回票抵達成田後憑護照購買；旅平險出事流程與該留的單據見下方。"
+  },
+  {
+    id:7, color:"var(--d5)", label:"憑證", date:"Tickets", theme:"訂位憑證",
+    isVault:true,
+    title:"訂位憑證與票券",
+    note:"機票、住宿、Sky Duck、浴衣、旅平險的預訂編號與明細（示範資料）。"
+  }
+];
+
+/* ---------------- state ---------------- */
+let activeId = 1;
+let map, directionsService;
+let overlayList = [];   // every Marker/Polyline/HtmlOverlay currently on the map
+let currentMarkers = {}, currentCoords = [];
+let legRoutes = {};     // stop index -> {lines:[halo,line], coords, walk} for click-to-highlight
+let activeLegIdx = null;
+let layerToken = 0;     // race guard: discard async route draws from a stale day
+const routeCache = new Map();
+
+const panel     = document.getElementById('panel');
+const grip      = document.getElementById('grip');
+const pBody     = document.getElementById('pBody');
+const snapBtn   = document.getElementById('snapBtn');
+const dayRail   = document.getElementById('dayRail');
+const pEyebrow  = document.getElementById('pEyebrow');
+const pTitle    = document.getElementById('pTitle');
+const pNote     = document.getElementById('pNote');
+const infoBtn   = document.getElementById('infoBtn');
+const fitBtn    = document.getElementById('fitBtn');
+
+const isWide = () => window.matchMedia('(min-width:900px)').matches;
+const mapUrl = q => "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(q);
+// directions from current location (origin omitted) to the stop; prefer the
+// place name so Google resolves the actual POI, fall back to raw coordinates
+const navUrl = s => "https://www.google.com/maps/dir/?api=1&destination=" +
+  encodeURIComponent(s.map || s.coord.join(','));
+const colorOf = d => d.isOverview || d.isInfo || d.isVault ? DAY_COLORS[5] : DAY_COLORS[d.id];
+
+/* ---------------- sheet snap (mobile only) ---------------- */
+function snapPx(name){
+  if(name==='peek') return 176;
+  if(name==='half') return Math.round(window.innerHeight*0.52);
+  if(name==='full') return Math.round(window.innerHeight*0.90);
+  return 176;
+}
+function setSnap(name, animate){
+  panel.dataset.snap = name;
+  snapBtn.classList.toggle('up', name==='full');
+  if(isWide()){ panel.style.removeProperty('height'); return; }
+  panel.classList.toggle('dragging', animate === false);
+  panel.style.height = snapPx(name) + 'px';
+}
+function cycleSnap(){
+  const order = ['peek','half','full'];
+  setSnap(order[(order.indexOf(panel.dataset.snap)+1) % order.length]);
+}
+
+let dragStartY = 0, dragStartH = 0, dragging = false, moved = false;
+grip.addEventListener('pointerdown', e=>{
+  if(isWide()) return;
+  grip.setPointerCapture(e.pointerId);
+  dragging = true; moved = false;
+  dragStartY = e.clientY;
+  dragStartH = panel.getBoundingClientRect().height;
+  panel.classList.add('dragging');
+});
+grip.addEventListener('pointermove', e=>{
+  if(!dragging) return;
+  const dy = dragStartY - e.clientY;
+  if(Math.abs(dy) > 4) moved = true;
+  panel.style.height = Math.max(snapPx('peek'), Math.min(snapPx('full'), dragStartH + dy)) + 'px';
+});
+function endDrag(){
+  if(!dragging) return;
+  dragging = false;
+  panel.classList.remove('dragging');
+  if(!moved){ cycleSnap(); return; }
+  const h = panel.getBoundingClientRect().height;
+  let nearest = 'half', best = Infinity;
+  ['peek','half','full'].forEach(k=>{
+    const diff = Math.abs(snapPx(k) - h);
+    if(diff < best){ best = diff; nearest = k; }
+  });
+  setSnap(nearest);
+}
+grip.addEventListener('pointerup', endDrag);
+grip.addEventListener('pointercancel', endDrag);
+snapBtn.addEventListener('click', e=>{ e.stopPropagation(); cycleSnap(); });
+window.addEventListener('resize', ()=>{
+  setSnap(panel.dataset.snap, false);
+  if(map) google.maps.event.trigger(map, 'resize');
+});
+
+/* ---------------- map (Google Maps JavaScript API) ---------------- */
+
+// Lightweight HTML marker so we can reuse the exact .pin design on top of a real Google basemap.
+// Defined lazily: google.maps only exists after the async loader fires gmapsInit.
+let HtmlOverlay;
+function defineHtmlOverlay(){
+HtmlOverlay = class extends google.maps.OverlayView {
+  constructor(position, html, anchor, opts={}){
+    super();
+    this.position = new google.maps.LatLng(position[0], position[1]);
+    this.html = html;
+    this.anchor = anchor || [0,0];
+    this.onClick = opts.onClick;
+    this.title = opts.title;
+    this.div = null;
+  }
+  onAdd(){
+    const div = document.createElement('div');
+    div.style.position = 'absolute';
+    div.innerHTML = this.html;
+    if(this.title) div.title = this.title;
+    if(this.onClick){
+      div.style.cursor = 'pointer';
+      div.addEventListener('click', this.onClick);
+    }
+    this.div = div;
+    this.getPanes().overlayMouseTarget.appendChild(div);
+  }
+  draw(){
+    if(!this.div) return;
+    const proj = this.getProjection();
+    if(!proj) return;
+    const pt = proj.fromLatLngToDivPixel(this.position);
+    if(pt){
+      this.div.style.left = (pt.x - this.anchor[0]) + 'px';
+      this.div.style.top  = (pt.y - this.anchor[1]) + 'px';
+    }
+  }
+  onRemove(){
+    if(this.div && this.div.parentNode) this.div.parentNode.removeChild(this.div);
+    this.div = null;
+  }
+  getElement(){ return this.div; }
+};
+}
+
+/* ---------------- map layer toggles ---------------- */
+const BASE_STYLE = [
+  { featureType:"poi.park", elementType:"geometry", stylers:[{ color:"#d7e7d3" }] }
+];
+// applied after the layer toggles so a broader rule (e.g. road labels "on")
+// can't turn these back on
+const OVERRIDE_STYLE = [
+  { featureType:"road.arterial", elementType:"labels.icon", stylers:[{ visibility:"off" }] }
+];
+const LAYERS = [
+  { key:"attraction", icon:"📸", label:"觀光景點", hint:"地標、寺廟神社、博物館", def:true,  rules:["poi.attraction","poi.place_of_worship"] },
+  { key:"transit",    icon:"🚉", label:"車站與鐵路", hint:"車站名稱與軌道線", def:true, rules:["transit"] },
+  { key:"roads",      icon:"🛣️", label:"路名標籤", hint:"街道與道路名稱", def:true, rules:[["road","labels"]] },
+  { key:"park",       icon:"🌳", label:"公園綠地", hint:"公園範圍與名稱", def:true, rules:["poi.park"] },
+  { key:"business",   icon:"🍜", label:"商家與餐廳", hint:"店家、餐廳、購物中心", def:false, rules:["poi.business"] },
+  { key:"facility",   icon:"🏫", label:"學校．醫療．機關", hint:"平常用不到，預設隱藏", def:false, rules:["poi.school","poi.medical","poi.government"] }
+];
+const LAYER_LS_KEY = "mapLayers-v1";
+let layerState = {};
+try{ layerState = JSON.parse(localStorage.getItem(LAYER_LS_KEY)) || {}; }catch(e){ layerState = {}; }
+LAYERS.forEach(l=>{ if(typeof layerState[l.key] !== "boolean") layerState[l.key] = l.def; });
+
+function buildLayerStyles(){
+  const styles = [...BASE_STYLE];
+  for(const l of LAYERS){
+    const vis = layerState[l.key] ? "on" : "off";
+    for(const r of l.rules){
+      if(Array.isArray(r)) styles.push({ featureType:r[0], elementType:r[1], stylers:[{ visibility:vis }] });
+      else styles.push({ featureType:r, stylers:[{ visibility:vis }] });
+    }
+  }
+  styles.push(...OVERRIDE_STYLE);
+  return styles;
+}
+function applyLayerStyles(){
+  try{ localStorage.setItem(LAYER_LS_KEY, JSON.stringify(layerState)); }catch(e){}
+  if(map) map.setOptions({ styles: buildLayerStyles() });
+}
+
+function makePinHtml(color, num, icon){
+  return `<div class="pin" style="--mc:${color}"><span class="emo">${icon||'📍'}</span><span class="num">${num}</span></div>`;
+}
+function initMap(){
+  map = new google.maps.Map(document.getElementById('mapDiv'), {
+    center:{ lat:35.68, lng:139.75 }, zoom:11,
+    disableDefaultUI:true, zoomControl:true, clickableIcons:false,
+    styles: buildLayerStyles()
+  });
+  directionsService = new google.maps.DirectionsService();
+  const osmCredit = document.createElement('div');
+  osmCredit.className = 'osm-credit';
+  osmCredit.innerHTML = '路線資料 © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors';
+  map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(osmCredit);
+}
+function clearLayer(){
+  overlayList.forEach(o=>o.setMap(null));
+  overlayList = [];
+}
+function drawRoute(coords, color, faint, walk){
+  if(coords.length < 2) return [];
+  const path = coords.map(c=>({ lat:c[0], lng:c[1] }));
+  const halo = new google.maps.Polyline({
+    path, strokeColor:'#ffffff', strokeOpacity:.9, strokeWeight: faint?5:(walk?6:8)
+  });
+  halo.setMap(map);
+  overlayList.push(halo);
+
+  const lineOpts = {
+    path, strokeColor:color,
+    strokeOpacity: walk ? 0 : (faint?.55:.95),
+    strokeWeight: faint?2:(walk?3:4)
+  };
+  if(walk){
+    lineOpts.icons = [{
+      icon:{ path:'M 0,-1 0,1', strokeOpacity:.95, scale:3 },
+      offset:'0', repeat:'12px'
+    }];
+  }
+  const line = new google.maps.Polyline(lineOpts);
+  line.setMap(map);
+  overlayList.push(line);
+  return [halo, line];
+}
+function drawHop(a, b){
+  const line = new google.maps.Polyline({
+    path:[{ lat:a[0], lng:a[1] }, { lat:b[0], lng:b[1] }],
+    strokeColor:'#8b97a7', strokeOpacity:0, strokeWeight:2.5,
+    icons:[{ icon:{ path:'M 0,-1 0,1', strokeOpacity:.5, scale:2.5 }, offset:'0', repeat:'10px' }]
+  });
+  line.setMap(map);
+  overlayList.push(line);
+}
+function drawViaStations(leg){
+  (leg.stations||[]).forEach(st=>{
+    const html = `<div class="via-dot" style="--c:${leg.color}"></div>`;
+    const ov = new HtmlOverlay(st.coord, html, [4.5,4.5], { title:st.name });
+    ov.setMap(map);
+    overlayList.push(ov);
+  });
+}
+function padTop(){ return isWide() ? 40 : 170; }
+function padBottom(){ return isWide() ? 40 : (parseInt(panel.style.height,10) || snapPx(panel.dataset.snap)) + 24; }
+function flyToCoords(coords){
+  if(!coords || !coords.length) return;
+  if(coords.length === 1){
+    map.panTo({ lat:coords[0][0], lng:coords[0][1] });
+    map.setZoom(15);
+    return;
+  }
+  const bounds = new google.maps.LatLngBounds();
+  coords.forEach(c=>bounds.extend({ lat:c[0], lng:c[1] }));
+  map.fitBounds(bounds, {
+    top: padTop(), bottom: padBottom(),
+    left: isWide()?40:24, right: isWide()?40:24
+  });
+}
+function setActiveMarker(idx){
+  Object.values(currentMarkers).forEach(m=>{
+    const pin = m && m.getElement() && m.getElement().querySelector('.pin');
+    if(pin) pin.classList.remove('is-active');
+  });
+  const m = currentMarkers[idx];
+  const pin = m && m.getElement() && m.getElement().querySelector('.pin');
+  if(pin) pin.classList.add('is-active');
+}
+function setActiveStop(idx){
+  if(activeLegIdx !== null){
+    activeLegIdx = null;
+    document.querySelectorAll('.leg').forEach(el=>el.classList.remove('is-active'));
+    applyLegStyles();
+  }
+  document.querySelectorAll('.stop').forEach(el=>el.classList.toggle('is-active', +el.dataset.idx === idx));
+  setActiveMarker(idx);
+}
+
+/* ---------------- leg click-to-highlight ---------------- */
+function applyLegStyles(){
+  const dim = activeLegIdx !== null;
+  for(const [idx, r] of Object.entries(legRoutes)){
+    const sel = +idx === activeLegIdx;
+    const [halo, line] = r.lines;
+    if(!halo || !line) continue;
+    halo.setOptions({ strokeOpacity: dim && !sel ? .15 : .9, strokeWeight: sel ? (r.walk?8:10) : (r.walk?6:8), zIndex: sel ? 4 : 1 });
+    if(r.walk){
+      line.setOptions({ zIndex: sel ? 5 : 2, icons:[{ icon:{ path:'M 0,-1 0,1', strokeOpacity: dim && !sel ? .25 : .95, scale: sel ? 3.6 : 3 }, offset:'0', repeat:'12px' }] });
+    }else{
+      line.setOptions({ strokeOpacity: dim && !sel ? .2 : .95, strokeWeight: sel ? 6 : 4, zIndex: sel ? 5 : 2 });
+    }
+  }
+}
+function setActiveLeg(idx){
+  activeLegIdx = activeLegIdx === idx ? null : idx;
+  document.querySelectorAll('.leg').forEach(el=>el.classList.toggle('is-active', +el.dataset.idx === activeLegIdx));
+  if(activeLegIdx !== null){
+    document.querySelectorAll('.stop').forEach(el=>el.classList.remove('is-active'));
+    setActiveMarker(-1);
+  }
+  applyLegStyles();
+  const r = activeLegIdx !== null ? legRoutes[activeLegIdx] : null;
+  if(r){
+    if(!isWide() && panel.dataset.snap === 'full') setSnap('half');
+    flyToCoords(r.coords);
+  }else{
+    flyToCoords(currentCoords);
+  }
+}
+
+/* ---------------- real routing via Google Directions API ---------------- */
+function travelModeOf(mode){
+  return mode === 'walk' ? google.maps.TravelMode.WALKING : google.maps.TravelMode.TRANSIT;
+}
+function fetchDirections(origin, destination, mode){
+  const key = mode + ':' + origin.join(',') + '>' + destination.join(',');
+  if(routeCache.has(key)) return routeCache.get(key);
+  const req = {
+    origin:{ lat:origin[0], lng:origin[1] },
+    destination:{ lat:destination[0], lng:destination[1] },
+    travelMode: travelModeOf(mode)
+  };
+  const p = directionsService.route(req).then(res=>{
+    if(!(res.routes && res.routes[0])) throw new Error('no route');
+    return res;
+  }).catch(err=>{
+    console.warn('Directions API 路線抓取失敗，暫用直線代替（請確認 Directions API 已啟用）：', mode, err && err.message);
+    return null;
+  });
+  routeCache.set(key, p);
+  return p;
+}
+function findAdjacentCoord(stops, idx, dir){
+  for(let i=idx+dir; i>=0 && i<stops.length; i+=dir){
+    if(stops[i].coord) return stops[i].coord;
+  }
+  return null;
+}
+
+function buildDayLayer(d){
+  currentMarkers = {};
+  const bounds = [];
+  const myToken = ++layerToken;
+
+  // 1. real route geometry per leg. Rail legs carry OSM-traced waypoints in DATA
+  // (Google's APIs have no transit routing coverage in Japan); walk legs fetch
+  // live WALKING directions. Everything lands in legRoutes for click-to-highlight.
+  d.stops.forEach((s,i)=>{
+    if(s.type !== 'transit') return;
+    if(s.mode === 'rail' && s.path){
+      legRoutes[i] = { lines: drawRoute(s.path, s.color, false, false), coords: s.path, walk: false };
+      drawViaStations(s);
+      return;
+    }
+    if(s.mode !== 'walk' && s.mode !== 'rail') return;
+    const origin = s.from || findAdjacentCoord(d.stops, i, -1);
+    const destination = s.to || findAdjacentCoord(d.stops, i, 1);
+    if(!origin || !destination) return;
+    fetchDirections(origin, destination, s.mode).then(res=>{
+      if(myToken !== layerToken) return; // user already switched days — drop it
+      const isWalk = s.mode === 'walk';
+      const path = res ? res.routes[0].overview_path.map(pt=>[pt.lat(), pt.lng()]) : [origin, destination];
+      legRoutes[i] = { lines: drawRoute(path, s.color, false, isWalk), coords: path, walk: isWalk };
+      applyLegStyles(); // respect a highlight made before this leg resolved
+    });
+  });
+
+  // 2. numbered place pins
+  let order = 0;
+  d.stops.forEach((s,i)=>{
+    if(s.type === 'transit' || !s.coord) return;
+    order++;
+    const ov = new HtmlOverlay(s.coord, makePinHtml(DAY_COLORS[d.id], order, s.icon), [17,17], {
+      title: s.short || s.title,
+      onClick: ()=>{
+        if(!isWide() && panel.dataset.snap === 'peek') setSnap('half');
+        setActiveStop(i);
+        scrollToStop(`stop-${d.id}-${i}`);
+      }
+    });
+    ov.setMap(map);
+    overlayList.push(ov);
+    currentMarkers[i] = ov;
+    bounds.push(s.coord);
+  });
+  return bounds;
+}
+
+function buildOverviewLayer(){
+  currentMarkers = {};
+  const all = [];
+  DATA.filter(d=>d.stops).forEach(d=>{
+    const mapped = d.stops.map((s,i)=>({...s, idx:i})).filter(s=>s.coord);
+    const coords = mapped.map(s=>s.coord);
+    drawRoute(coords, DAY_COLORS[d.id], true);
+    mapped.forEach(s=>{
+      const ov = new HtmlOverlay(s.coord, makePinHtml(DAY_COLORS[d.id], d.id, s.icon), [17,17], {
+        title: `Day ${d.id} · ${s.short || s.title}`,
+        onClick: ()=>{
+          selectDay(d.id);
+          setTimeout(()=>{ setActiveStop(s.idx); scrollToStop(`stop-${d.id}-${s.idx}`); }, 380);
+        }
+      });
+      ov.setMap(map);
+      overlayList.push(ov);
+      all.push(s.coord);
+    });
+  });
+  return all;
+}
+
+/* ---------------- render ---------------- */
+function scrollToStop(id){
+  const el = document.getElementById(id);
+  if(el) el.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+function renderRail(){
+  dayRail.innerHTML = '';
+  DATA.forEach((d,i)=>{
+    const b = document.createElement('button');
+    b.className = 'station' + (d.id===activeId ? ' is-active':'') +
+                  (i===0 ? ' is-first':'') + (i===DATA.length-1 ? ' is-last':'');
+    b.style.setProperty('--c', colorOf(d));
+    b.setAttribute('aria-current', d.id===activeId ? 'true' : 'false');
+    const mark = d.isOverview ? '◎' : (d.isInfo ? 'i' : (d.isVault ? '券' : d.id));
+    const label = d.isOverview ? '總覽' : (d.isInfo ? '行前準備' : d.theme);
+    b.innerHTML = `<span class="seg l"></span><span class="seg r"></span>
+      <span class="dot">${mark}</span><span class="st-label">${label}</span>`;
+    b.addEventListener('click', ()=>selectDay(d.id));
+    dayRail.appendChild(b);
+  });
+  const on = dayRail.querySelector('.is-active');
+  if(on) on.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
+}
+
+function legHtml(s, i){
+  const clickable = s.mode === 'walk' || s.mode === 'rail';
+  return `
+    <div class="leg${s.mode==='walk' ? ' is-walk' : ''}${s.path ? ' has-path' : ''}${clickable ? ' is-clickable' : ''}" style="--c:${s.color}" data-leg="1" data-idx="${i}"${clickable ? ' title="點擊在地圖上高亮這段路線"' : ''}>
+      <div class="leg-rail"><span class="leg-line"></span></div>
+      <div class="leg-body">
+        <div class="leg-head"><span class="leg-badge">${s.badge}</span><span class="leg-name">${s.line}</span></div>
+        <div class="leg-meta">${[s.dur, s.fare].filter(Boolean).join('　·　')}</div>
+        ${s.via ? `<div class="leg-via">${s.via}</div>` : ''}
+        ${s.note ? `<div class="leg-note">${s.note}</div>` : ''}
+      </div>
+    </div>`;
+}
+
+function stopsHtml(d){
+  let order = 0;
+  return `<div class="timeline">` + d.stops.map((s,i)=>{
+    if(s.type === 'transit') return legHtml(s, i);
+    order++;
+    return `
+    <article class="stop" id="stop-${d.id}-${i}" style="--c:${d.color}" data-idx="${i}">
+      <div class="stop-dot">${s.coord ? order : '·'}</div>
+      <div class="stop-card">
+        <div class="stop-time">${s.time}　${s.icon}</div>
+        <h3 class="stop-title">${s.title}</h3>
+        <p class="stop-desc">${s.desc}</p>
+        ${s.tags ? `<div class="tags">${s.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>` : ''}
+        ${s.map || s.coord ? `<div class="stop-links">
+          ${s.map ? `<a class="maplink" href="${mapUrl(s.map)}" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.3"/></svg>
+            Google 地圖</a>` : ''}
+          <a class="maplink navlink" href="${navUrl(s)}" target="_blank" rel="noopener" title="從目前位置導航到這裡">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2 21 21 12 16.5 3 21 12 2Z"/></svg>
+            導航</a>
+        </div>` : ''}
+      </div>
+    </article>`;
+  }).join('') + `</div>`;
+}
+
+function overviewHtml(){
+  const days = DATA.filter(x=>x.stops);
+  const lines = days.map(x=>`<span class="line-chip"><i style="background:${DAY_COLORS[x.id]}"></i>Day ${x.id} · ${x.theme}</span>`).join('');
+  const rows = days.map(x=>`
+    <div class="ov" data-day="${x.id}" style="--c:${DAY_COLORS[x.id]}">
+      <span class="ov-dot">${x.id}</span>
+      <span><span class="ov-day">${x.date}</span><span class="ov-title">${x.title}</span></span>
+    </div>`).join('');
+  return `<div class="lines">${lines}</div>${rows}`;
+}
+
+function infoHtml(){
+  return `
+  <div class="info">
+    <div class="sec"><i></i><h3>航班與住宿</h3></div>
+    <div class="facts">
+      <div class="fact"><span class="fk">接送</span><span><b>王小明（範例）</b> <a href="tel:0912345678">0912-345-678</a> · 灰色福斯 Caddy · ABC-1234 · <span class="fm tzTW">08/28 03:40</span> 出發 · 800 元</span></div>
+      <div class="fact"><span class="fk">去程</span><span><b>TR866</b> <span class="fm tzTW">08/28 06:45</span> 桃園 → <span class="fm">11:15</span> 成田</span></div>
+      <div class="fact"><span class="fk">回程</span><span><b>GK011</b> <span class="fm">09/01 22:40</span> 成田 → <span class="fm tzTW">01:30</span> 桃園</span></div>
+      <div class="fact"><span class="fk">住宿</span><span><b>新宿区 N.U.T.S 酒店</b> 共 4 晚</span></div>
+      <div class="fact"><span class="fk">憑證</span><span>訂位編號、座位與預約明細見「<b>憑證</b>」分頁</span></div>
+    </div>
+
+    <div class="sec"><i></i><h3>🛡️ 旅遊平安險 · 出事了怎麼辦</h3></div>
+    <a class="sos" href="tel:+886226199210">
+      <span class="si">☎️</span>
+      <span class="sb"><b>明台產物 24h 海外緊急救援</b><i>+886-2-6619-9210</i></span>
+      <span class="sg">撥打 ›</span>
+    </a>
+    <div class="facts">
+      <div class="fact"><span class="fk">效期</span><span><span class="fm tzTW">08/28 03:00</span> 起至 <span class="fm tzTW">09/02 03:00</span> 止 · 旅遊地點 <b>日本</b></span></div>
+      <div class="fact"><span class="fk">保單</span><span>保單號碼與被保險人資料見「<b>憑證</b>」分頁</span></div>
+      <div class="fact"><span class="fk">客服</span><span>免付費 <a href="tel:0800528528">0800-528-528</a> · 申訴 <a href="tel:0800099080">0800-099-080</a></span></div>
+    </div>
+
+    <div class="case">
+      <div class="case-h"><span class="ci">🏥</span><span class="ct">生病或受傷要看醫生</span><span class="cc">突發疾病 36萬 · 意外醫療 90萬</span></div>
+      <ol>
+        <li>小症狀先找藥妝店；要就醫時<b>先打救援專線</b>，可請他們協助找醫院、翻譯與安排就診。</li>
+        <li>日本就醫一律<b>當場自費</b>，回台後再申請理賠。</li>
+        <li>日本診所開「<b>診斷書（診断書）</b>」要另外收費，但這是理賠必備，<b>看診當下就要開口要</b>，事後補開很麻煩。</li>
+        <li>收據要能看出<b>就診日期、病名、明細金額</b>；只有一張刷卡單不夠。</li>
+      </ol>
+      <div class="keep"><span class="kk">留存</span>診斷書（診断書）· 醫療費用收據與明細（領収書・明細書）· 護照與出入境紀錄 · 藥袋或處方箋</div>
+    </div>
+
+    <div class="case">
+      <div class="case-h"><span class="ci">🧳</span><span class="ct">託運行李沒出來（行李延誤）</span><span class="cc">6,000 元 · 滿 6 小時</span></div>
+      <ol>
+        <li>行李沒到，<b>先別離開機場</b>：到航空公司櫃檯辦<b>行李意外報告表（PIR）</b>。條款寫明沒通知、沒拿到 PIR 就<b>不賠</b>。</li>
+        <li>要抵達目的地後<b>超過 6 小時仍未領得</b>才成立，每趟旅程<b>限請求 1 次</b>。</li>
+        <li>等待期間買的盥洗用品、換洗衣物，<b>收據全部留著</b>。</li>
+      </ol>
+      <p class="warn">⚠️ 條款明訂<b>返抵台灣時的行李延誤不賠</b>，所以只有 8/28 抵達成田那段有保障，9/1 回桃園那段沒有。</p>
+      <div class="keep"><span class="kk">留存</span>行李意外報告表 PIR · 航空公司出具「延遲達 6 小時以上」的證明 · 登機證與行李條 · 應急採購收據</div>
+    </div>
+
+    <div class="case">
+      <div class="case-h"><span class="ci">✈️</span><span class="ct">班機或大眾運輸延誤</span><span class="cc">每滿 3 小時 3,000 · 上限 6,000</span></div>
+      <ol>
+        <li>班機<b>延誤起飛或延誤降落達 3 小時</b>起賠，每滿 3 小時給付 3,000 元，最高 6,000 元。</li>
+        <li>轉機失接且 <b>3 小時內無替代班機</b>、或被<b>超賣拒絕登機</b>：各給付 3,000 元。</li>
+        <li><b>同一出發地限賠 1 次</b>，整趟保險期間最多 2 次。</li>
+        <li>飛機以外（鐵路、巴士、船）<b>延誤出發達 3 小時</b>：給付 3,000 元。</li>
+        <li>延誤時數從<b>原定出發時刻</b>算到<b>第一班替代班次出發</b>為止。</li>
+      </ol>
+      <div class="keep"><span class="kk">留存</span>機票或購票證明 · 航空公司開立、載明<b>延誤期間與原因</b>的證明 · 登機證 · 現場公告與航班看板拍照</div>
+    </div>
+
+    <div class="case">
+      <div class="case-h"><span class="ci">🛂</span><span class="ct">護照或票證被偷、遺失</span><span class="cc">3,000 元</span></div>
+      <ol>
+        <li><b>知悉後 24 小時內</b>向當地警方／海關／運輸業者報案，並取得<b>書面</b>事故證明——只是口頭講不算。</li>
+        <li>護照遺失：先報案，再到<b>台北駐日經濟文化代表處</b>申請入國證明書才能回台。</li>
+        <li>理賠涵蓋<b>重辦文件的費用</b>，加上重辦期間多花的住宿、餐費與交通費。</li>
+      </ol>
+      <div class="keep"><span class="kk">留存</span>書面報案證明 · 重辦文件的費用收據 · 期間額外的住宿／餐飲／交通收據</div>
+    </div>
+
+    <div class="case">
+      <div class="case-h"><span class="ci">🎒</span><span class="ct">隨身物品被偷或被弄壞</span><span class="cc">6,000 元</span></div>
+      <ol>
+        <li>遭竊、搶奪：<b>24 小時內</b>向當地警察報案並取得<b>報案證明</b>。</li>
+        <li>飯店或運輸業者弄壞、弄丟：<b>立刻通知對方</b>，並在<b>3 天內以書面</b>索取事故與損失證明。</li>
+        <li>單件上限 8,000 元（可攜式電腦 40,000 元），總額仍以保額為限。</li>
+      </ol>
+      <p class="warn">⚠️ <b>不賠</b>：現金、有價證券、機票與各種車票、<b>手機</b>、珠寶飾品、古董、行李箱本身。手機被偷是不賠的。</p>
+      <div class="keep"><span class="kk">留存</span>報案證明或業者出具的事故與損失證明 · 損失清單 · 購買憑證或價值證明</div>
+    </div>
+
+    <div class="case">
+      <div class="case-h"><span class="ci">⚖️</span><span class="ct">撞到人或弄壞別人的東西</span><span class="cc">100 萬 · 自負額 10%</span></div>
+      <ol>
+        <li><b>絕對不要當場自行認賠或私下和解</b>——未經保險公司參與的和解或賠償，公司<b>不受拘束</b>（可能就不賠了）。</li>
+        <li>除必要的急救費用外，先<b>知悉後 5 日內書面通知</b>明台，30 日內補送事故時間、地點、對方姓名年齡地址與事故狀況。</li>
+        <li>收到任何賠償請求書、法院文書或傳票，<b>一律轉交保險公司</b>。</li>
+        <li>理賠時每次事故要先自付損失金額的 <b>10%</b>。</li>
+      </ol>
+      <div class="keep"><span class="kk">留存</span>對方姓名與聯絡方式 · 現場照片 · 警方或場館管理單位紀錄 · 對方求償文件正本</div>
+    </div>
+
+    <div class="sec"><i></i><h3>⏱️ 理賠的時間底線與其他額度</h3></div>
+    <div class="facts">
+      <div class="fact"><span class="fk">通知</span><span>意外或損失：知悉後<b>儘速</b>通知明台；責任事故：<b>5 日內</b>書面通知</span></div>
+      <div class="fact"><span class="fk">送件</span><span>不便險各項須於<b>旅遊結束後 30 日內</b>備齊理賠申請書與單據送達</span></div>
+      <div class="fact"><span class="fk">給付</span><span>明台收齊文件後 <b>15 天內</b>賠付，逾期加計年利一分利息</span></div>
+      <div class="fact"><span class="fk">其他</span><span>旅程取消／更改各 5 萬 · 海外探視 5 萬 · 緊急醫療運送 150 萬 · 身故失能 900 萬 · 旅行期間居家竊盜 10 萬</span></div>
+    </div>
+    <p class="caution">通則：單據一律<b>留正本</b>，出發前把保單、護照拍照存手機。上列時數與條件依明台產物旅遊不便保險條款（107.08.31 修正版）整理，實際給付以保單所載「甲型」承保項目與條款為準；不確定時先打救援專線問清楚再行動。</p>
+
+    <div class="sec"><i></i><h3>8/28–9/1 天氣與穿著</h3></div>
+    <p>白天約 30–34°C、悶熱，夜間 25–27°C。夏末午後容易有短暫雷陣雨，甚至受颱風外圍影響。</p>
+    <ul>
+      <li>透氣棉麻短袖、短褲或裙裝</li>
+      <li>折疊晴雨傘、防曬乳、太陽眼鏡、隨身小風扇</li>
+      <li>電車／百貨冷氣強，帶薄外套或輕便雨衣備用</li>
+    </ul>
+
+    <div class="sec"><i></i><h3>N'EX 成田特快 購票指南（下機後購買）</h3></div>
+    <p><b>買什麼：</b>N'EX TOKYO 來回票（外國護照優惠）大人 <b>5,200 円</b>，14 天內來回有效、涵蓋新宿（8/28 去＋9/1 回剛好用）。單程原價約 3,450 円，來回現省約 1,700 円／人。全車指定席，購票時一併劃位。</p>
+    <ol>
+      <li><b>哪裡買：</b>T1 入境後到 <b>B1 的 JR 東日本旅行服務中心</b>（JR EAST Travel Service Center，車站就在旁邊）。<b>兩本護照都要帶</b>，需查驗短期停留資格。</li>
+      <li><b>排隊備案：</b>櫃檯人多時，可改用有<b>護照讀取功能的紅色指定席售票機</b>自助購買（選「Rail Pass for visitors」→ N'EX 來回票）。</li>
+      <li><b>劃位取票：</b>當場劃好去程（往新宿直達班次約 30–60 分一班）；<b>回程 9/1 的座位建議同時劃好</b>，之後要改可在任一指定席售票機插入票券重新劃位。</li>
+      <li><b>回程搭乘：</b>9/1 從新宿搭 N'EX，在「成田空港第2・第3ターミナル」站下車，往 T3 步行約 15 分（或搭航廈間免費接駁車）。</li>
+    </ol>
+
+    <div class="sec"><i></i><h3>Sky Duck 黃昏場（柯南聯名 Twilight Cruise）</h3></div>
+    <p>搭乘地點：日本丸紀念公園 SKY DUCK 售票櫃檯前；下車地點：Tower D 棟前（與上車處不同）。全程約 40 分（陸上 10 分・水上 30 分）。可於官網 book.skybus.jp 預約，或電話 03-3215-0008（9:30–18:00）、現場櫃檯購票；建議提早 30–40 分報到。</p>
+    <div class="slots">
+      <div class="slot"><span class="sd">8/29（六）</span><span class="sh">18:10（已預約 ✓ 見憑證分頁）</span></div>
+      <div class="slot"><span class="sd">8/30（日）</span><span class="sh">18:10（備用場次）</span></div>
+    </div>
+    <table class="fare">
+      <thead><tr><th>票種</th><th>平日</th><th>假日／特定日</th></tr></thead>
+      <tbody>
+        <tr><td>乘車 大人（13 歲以上）</td><td>3,600 円</td><td>4,000 円</td></tr>
+        <tr><td>乘車 兒童（4–12 歲）</td><td>1,800 円</td><td>2,000 円</td></tr>
+        <tr><td>附周邊 大人</td><td>5,100 円</td><td>5,500 円</td></tr>
+        <tr><td>附周邊 兒童</td><td>3,300 円</td><td>3,500 円</td></tr>
+      </tbody>
+    </table>
+    <p class="caution">附周邊商品票線上已售完，僅現場販售、數量有限。大型行李無法帶上車，需在乘車口寄放。天候、潮位不佳時可能臨時停駛，出發前可查官網運休情報；線上預約取消可退款。</p>
+  </div>`;
+}
+
+function selectDay(id){
+  activeId = id;
+  const d = DATA.find(x=>x.id===id);
+  document.documentElement.style.setProperty('--accent', d.color);
+  renderRail();
+  clearLayer();
+  currentCoords = [];
+
+  legRoutes = {};
+  activeLegIdx = null;
+
+  pEyebrow.textContent = d.isOverview ? '五天總覽' : (d.isInfo ? '出發前確認' : `${d.label} · ${d.date}`);
+  pTitle.textContent = d.title;
+  pNote.textContent = d.note;
+
+  if(d.isVault){
+    pBody.innerHTML = VAULT_HTML || '<div class="info"><p class="caution">憑證內容已加密，請重新整理頁面並輸入密碼解鎖。</p></div>';
+    pBody.querySelectorAll('[data-doc]').forEach(b=>{
+      b.addEventListener('click', ()=>openDoc(b.dataset.doc, b));
+    });
+    convertTimes(panel);
+    setSnap('full');
+    return;
+  }
+
+  if(d.isInfo){
+    pBody.innerHTML = infoHtml();
+    convertTimes(panel);
+    setSnap('full');
+    return;
+  }
+
+  if(d.isOverview){
+    pBody.innerHTML = overviewHtml();
+    pBody.querySelectorAll('.ov').forEach(row=>{
+      row.addEventListener('click', ()=>selectDay(parseInt(row.dataset.day,10)));
+    });
+    currentCoords = buildOverviewLayer();
+    setSnap(isWide() ? 'half' : 'peek');
+    flyToCoords(currentCoords);
+    return;
+  }
+
+  pBody.innerHTML =
+    `<div class="weather"><span class="wi">🌤️</span><span class="wt">${d.weather.t}</span><span>${d.weather.d}</span></div>` +
+    stopsHtml(d);
+  pBody.querySelectorAll('.stop').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const idx = parseInt(el.dataset.idx,10);
+      const s = d.stops[idx];
+      setActiveStop(idx);
+      if(s.coord) flyToCoords([s.coord]);
+    });
+  });
+  pBody.querySelectorAll('.leg.is-clickable').forEach(el=>{
+    el.addEventListener('click', ()=>setActiveLeg(parseInt(el.dataset.idx,10)));
+  });
+  convertTimes(panel);
+  currentCoords = buildDayLayer(d);
+  setSnap('half');
+  flyToCoords(currentCoords);
+}
+
+infoBtn.addEventListener('click', ()=>selectDay(6));
+fitBtn.addEventListener('click', ()=>flyToCoords(currentCoords));
+
+/* ---------------- layer sheet UI ---------------- */
+const layerBtn = document.getElementById('layerBtn');
+const layerSheet = document.getElementById('layerSheet');
+const layerBackdrop = document.getElementById('layerBackdrop');
+const layerRows = document.getElementById('layerRows');
+function renderLayerRows(){
+  layerRows.innerHTML = '';
+  LAYERS.forEach(l=>{
+    const b = document.createElement('button');
+    b.className = 'lrow' + (layerState[l.key] ? ' on' : '');
+    b.setAttribute('aria-pressed', layerState[l.key]);
+    b.innerHTML = `<span class="li">${l.icon}</span><span class="lt"><b>${l.label}</b><span>${l.hint}</span></span><span class="lsw"></span>`;
+    b.addEventListener('click', ()=>{
+      layerState[l.key] = !layerState[l.key];
+      b.classList.toggle('on', layerState[l.key]);
+      b.setAttribute('aria-pressed', layerState[l.key]);
+      applyLayerStyles();
+    });
+    layerRows.appendChild(b);
+  });
+}
+function openLayerSheet(){ renderLayerRows(); layerSheet.hidden = false; layerBackdrop.hidden = false; }
+function closeLayerSheet(){ layerSheet.hidden = true; layerBackdrop.hidden = true; }
+layerBtn.addEventListener('click', openLayerSheet);
+layerBackdrop.addEventListener('click', closeLayerSheet);
+document.getElementById('layerClose').addEventListener('click', closeLayerSheet);
+
+/* ---------------- Taiwan / Japan time display toggle ----------------
+   All times in DATA and the vault are written in their local zone: Japan
+   by default, Taiwan-side ones (pickup, TPE dep/arr) marked with .tzTW.
+   convertTimes() re-renders panel text in the chosen zone (JST = TWT+1). */
+let tzMode = 'jp';
+try{ tzMode = localStorage.getItem('tim.tz') || 'jp'; }catch(_){}
+const tzBtn = document.getElementById('tzBtn');
+function tzLabel(){ tzBtn.textContent = tzMode === 'jp' ? '🇯🇵 日本' : '🇹🇼 台灣'; }
+tzLabel();
+
+function convertTimes(root){
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while(walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(node=>{
+    const txt = node.nodeValue;
+    if(!/\d{1,2}:\d{2}/.test(txt)) return;
+    const parent = node.parentElement;
+    if(!parent || parent.closest('.tconv')) return;
+    const base = parent.closest('.tzTW') ? 'tw' : 'jp';
+    if(base === tzMode) return;
+    const delta = tzMode === 'jp' ? 1 : -1; // tw→jp +1h, jp→tw −1h
+    const frag = document.createDocumentFragment();
+    let last = 0, changed = false;
+    for(const m of txt.matchAll(/(\d{1,2}):(\d{2})/g)){
+      const h = +m[1], min = +m[2];
+      if(h > 23 || min > 59) continue; // not a clock time
+      frag.appendChild(document.createTextNode(txt.slice(last, m.index)));
+      const s = document.createElement('span');
+      s.className = 'tconv';
+      s.title = (base === 'tw' ? '台灣時間 ' : '日本時間 ') + m[0];
+      s.textContent = String((h + delta + 24) % 24).padStart(2,'0') + ':' + m[2];
+      frag.appendChild(s);
+      last = m.index + m[0].length;
+      changed = true;
+    }
+    if(!changed) return;
+    frag.appendChild(document.createTextNode(txt.slice(last)));
+    node.parentNode.replaceChild(frag, node);
+  });
+}
+
+tzBtn.addEventListener('click', ()=>{
+  tzMode = tzMode === 'jp' ? 'tw' : 'jp';
+  try{ localStorage.setItem('tim.tz', tzMode); }catch(_){}
+  tzLabel();
+  if(typeof map !== 'undefined' && map) selectDay(activeId); // re-render times
+});
+
+/* ---------------- password gate + encrypted booking vault ----------------
+   The repo is public, so booking numbers/names live only in this AES-256-GCM
+   ciphertext (key = PBKDF2 of the password). Wrong password = decrypt fails.
+   DEMO BUILD: the vault holds fictional sample data; regenerate with
+   `node make-vault.js demo`. */
+const VAULT = {"iter":310000,"salt":"SFpaKMHRMTDigGGDD2fczQ==","iv":"xkR7AT6ACZkKci1i","ct":"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"};
+let VAULT_HTML = null;
+let VAULT_KEY = null;
+
+const gate = document.getElementById('gate');
+const gateForm = document.getElementById('gateForm');
+const gatePw = document.getElementById('gatePw');
+const gateErr = document.getElementById('gateErr');
+const b64d = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const b64e = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+
+async function vaultKeyBits(pw){
+  const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveBits']);
+  return crypto.subtle.deriveBits({name:'PBKDF2', salt:b64d(VAULT.salt), iterations:VAULT.iter, hash:'SHA-256'}, km, 256);
+}
+async function tryUnlock(rawBits){
+  const key = await crypto.subtle.importKey('raw', rawBits, 'AES-GCM', false, ['decrypt']);
+  const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:b64d(VAULT.iv)}, key, b64d(VAULT.ct));
+  VAULT_HTML = new TextDecoder().decode(pt);
+  VAULT_KEY = key; // same key decrypts the docs/*.bin originals
+}
+
+/* original booking PDFs, AES-GCM encrypted at docs/<id>.bin (iv[12] || ct||tag) */
+const docUrlCache = new Map();
+async function openDoc(id, btn){
+  if(!VAULT_KEY) return;
+  if(docUrlCache.has(id)){ window.open(docUrlCache.get(id), '_blank'); return; }
+  const win = window.open('', '_blank'); // opened synchronously so the popup isn't blocked
+  if(btn) btn.classList.add('is-busy');
+  try{
+    const res = await fetch('docs/' + id + '.bin');
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const buf = await res.arrayBuffer();
+    const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:new Uint8Array(buf.slice(0,12))}, VAULT_KEY, buf.slice(12));
+    const url = URL.createObjectURL(new Blob([pt], {type:'application/pdf'}));
+    docUrlCache.set(id, url);
+    if(win) win.location = url; else showDocOverlay(url); // standalone PWA may block popups
+  }catch(err){
+    if(win) win.close();
+    alert('文件開啟失敗，請確認網路後再試（' + err.message + '）');
+  }finally{
+    if(btn) btn.classList.remove('is-busy');
+  }
+}
+/* in-page PDF viewer for contexts where window.open is unavailable (iOS PWA) */
+function showDocOverlay(url){
+  const ov = document.createElement('div');
+  ov.className = 'doc-overlay';
+  ov.innerHTML = `<div class="do-bar"><button class="do-close" type="button">✕ 關閉</button></div><iframe src="${url}"></iframe>`;
+  ov.querySelector('.do-close').addEventListener('click', ()=>ov.remove());
+  document.body.appendChild(ov);
+}
+
+function dropGate(){
+  gate.classList.add('is-out');
+  setTimeout(()=>gate.remove(), 400);
+}
+gateForm.addEventListener('submit', async e=>{
+  e.preventDefault();
+  const pw = gatePw.value.trim();
+  if(!pw) return;
+  gateErr.textContent = '';
+  try{
+    const bits = await vaultKeyBits(pw);
+    await tryUnlock(bits);
+    try{ localStorage.setItem('tim.vk', b64e(bits)); }catch(_){}
+    dropGate();
+    const cur = DATA.find(x=>x.id===activeId);
+    if(cur && cur.isVault) selectDay(activeId);
+  }catch(_){
+    gateErr.textContent = '密碼不正確，請再試一次';
+    gatePw.select();
+  }
+});
+(async ()=>{
+  if(!(window.crypto && crypto.subtle)){
+    gateErr.textContent = '此瀏覽環境不支援解鎖，請以 https 正式網址開啟';
+    return;
+  }
+  const saved = localStorage.getItem('tim.vk');
+  if(!saved) return;
+  try{
+    await tryUnlock(b64d(saved).buffer);
+    dropGate();
+  }catch(_){
+    localStorage.removeItem('tim.vk');
+  }
+})();
+
+/* offline support: service worker precaches the site + encrypted PDFs */
+if('serviceWorker' in navigator && location.protocol === 'https:'){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+// called by the Google Maps loader once google.maps is ready (see script tag below)
+function gmapsInit(){
+  defineHtmlOverlay();
+  initMap();
+  selectDay(1);
+}
+</script>
+<script async
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBpcvvKTAp2ez7u7VT6LmS7pXPKI9rFS4I&callback=gmapsInit&loading=async&language=zh-TW&region=JP">
+</script>
+</body>
+</html>
